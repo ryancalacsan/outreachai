@@ -6,7 +6,7 @@ AI-powered patient outreach message generator for maternal and women's healthcar
 
 ## Live Demo
 
-**[outreachai-one.vercel.app](https://outreachai-one.vercel.app)**
+**[outreachai.ryancalacsan.dev](https://outreachai.ryancalacsan.dev)**
 
 The app works immediately in Demo Mode with pre-generated responses — no API keys needed.
 
