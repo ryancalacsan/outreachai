@@ -3,7 +3,8 @@ import { LLMGenerateParams, LLMGenerateResult } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function generateWithGemini(
-  params: LLMGenerateParams
+  params: LLMGenerateParams,
+  model: string = "gemini-2.5-flash"
 ): Promise<LLMGenerateResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -13,7 +14,7 @@ export async function generateWithGemini(
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model,
     contents: buildUserPrompt(
       params.patient,
       params.goal,

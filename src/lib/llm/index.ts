@@ -15,29 +15,33 @@ export interface LLMGenerateResult {
   channelMessages: ChannelMessages[];
 }
 
+export type LiveProvider = "claude" | "gemini" | "gemini-lite";
+
 export async function generateWithProvider(
-  provider: "claude" | "gemini",
+  provider: LiveProvider,
   params: LLMGenerateParams
 ): Promise<LLMGenerateResult> {
   switch (provider) {
     case "claude":
       return generateWithClaude(params);
     case "gemini":
-      return generateWithGemini(params);
+    case "gemini-lite":
+      return generateWithGemini(params, provider === "gemini-lite" ? "gemini-3.1-flash-lite-preview" : "gemini-2.5-flash");
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
 }
 
 export function streamWithProvider(
-  provider: "claude" | "gemini",
+  provider: LiveProvider,
   params: LLMGenerateParams
 ): AsyncGenerator<string> {
   switch (provider) {
     case "claude":
       return streamWithClaude(params);
     case "gemini":
-      return streamWithGemini(params);
+    case "gemini-lite":
+      return streamWithGemini(params, provider === "gemini-lite" ? "gemini-3.1-flash-lite-preview" : "gemini-2.5-flash");
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }

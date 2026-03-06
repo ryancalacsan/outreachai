@@ -79,6 +79,11 @@ const providers: {
     description: "Pre-generated responses",
   },
   {
+    value: "gemini-lite",
+    label: "Gemini 3.1 Flash Lite",
+    description: "Google AI — Free tier",
+  },
+  {
     value: "gemini",
     label: "Gemini 2.5 Flash",
     description: "Google AI — Free tier",
@@ -112,7 +117,7 @@ export function OutreachControls({
     );
   };
 
-  const needsAccessCode = provider === "claude" || provider === "gemini";
+  const needsAccessCode = provider !== "mock";
 
   const handleGenerate = () => {
     onGenerate({

@@ -66,7 +66,9 @@ export function MessageOutput({ response }: MessageOutputProps) {
             ? "Demo Mode"
             : response.provider === "gemini"
               ? "Gemini 2.5 Flash"
-              : "Claude Sonnet"}
+              : response.provider === "gemini-lite"
+                ? "Gemini 3.1 Flash Lite"
+                : "Claude Sonnet"}
         </div>
       </div>
 

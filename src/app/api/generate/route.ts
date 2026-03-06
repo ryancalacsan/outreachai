@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
-import { generateWithProvider, streamWithProvider } from "@/lib/llm";
+import { generateWithProvider, streamWithProvider, LiveProvider } from "@/lib/llm";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 }
 
 function handleStreamingRequest(
-  provider: "claude" | "gemini",
+  provider: LiveProvider,
   patient: Parameters<typeof generateWithProvider>[1]["patient"],
   goal: Parameters<typeof generateWithProvider>[1]["goal"],
   tone: Parameters<typeof generateWithProvider>[1]["tone"],

@@ -29,7 +29,7 @@ export type MessageTone =
   | "urgent-action"
   | "casual-friendly";
 
-export type LLMProvider = "claude" | "gemini" | "mock";
+export type LLMProvider = "claude" | "gemini" | "gemini-lite" | "mock";
 
 export interface Patient {
   id: string;
