@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import { CampaignView } from "@/components/campaign-view";
 import { PatientCard } from "@/components/patient-card";
 import { PatientSelect } from "@/components/patient-select";
@@ -98,6 +99,7 @@ export default function Home() {
               setDrawerOpen(true);
             }
           }} />
+          <Footer />
         </main>
       </div>
     );
@@ -223,6 +225,7 @@ export default function Home() {
 
             {mainContent}
           </div>
+          <Footer />
         </main>
       </div>
     </div>
