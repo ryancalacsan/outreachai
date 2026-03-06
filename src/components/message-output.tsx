@@ -53,14 +53,14 @@ export function MessageOutput({ response }: MessageOutputProps) {
 
   return (
     <div className="animate-fade-in-up space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-teal-500" />
           <h2 className="text-[15px] font-semibold tracking-tight">
             Generated Messages
           </h2>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 self-start rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground sm:self-auto">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           {response.provider === "mock"
             ? "Demo Mode"

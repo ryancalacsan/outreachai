@@ -78,11 +78,11 @@ export function PatientCard({
   }
 
   return (
-    <div className="animate-fade-in-up space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
+    <div className="animate-fade-in-up space-y-4 rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:p-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-teal-50 ring-1 ring-teal-200/40">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-50 ring-1 ring-teal-200/40">
             <User className="h-5 w-5 text-teal-600" />
           </div>
           <div>
@@ -112,7 +112,7 @@ export function PatientCard({
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg bg-muted/30 px-4 py-3 text-[13px]">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-2 rounded-lg bg-muted/30 px-4 py-3 text-[13px] sm:grid-cols-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Stethoscope className="h-3.5 w-3.5 text-muted-foreground/50" />
           <span>{careProgramLabels[patient.careProgram]}</span>

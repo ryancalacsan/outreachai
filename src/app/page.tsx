@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { CampaignView } from "@/components/campaign-view";
 import { PatientCard } from "@/components/patient-card";
+import { PatientSelect } from "@/components/patient-select";
 import { OutreachControls } from "@/components/outreach-controls";
 import { MessageOutput } from "@/components/message-output";
+import { MobileControlsDrawer } from "@/components/mobile-controls-drawer";
 import { patients } from "@/lib/data/patients";
 import { generateMessages, generateMessagesStream } from "@/lib/api";
 import { Patient, GenerateResponse } from "@/lib/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Users, Sparkles, ArrowLeft, AlertCircle } from "lucide-react";
+import { Sparkles, ArrowLeft, AlertCircle } from "lucide-react";
 
 export default function Home() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -21,6 +21,7 @@ export default function Home() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamChars, setStreamChars] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleGenerate = async (
     settings: Omit<Parameters<typeof generateMessages>[0], "patientId">
@@ -90,119 +91,136 @@ export default function Home() {
       <div className="flex h-screen flex-col">
         <Header />
         <main className="flex-1 overflow-y-auto">
-          <CampaignView onSelectPatient={setSelectedPatient} />
+          <CampaignView onSelectPatient={(patient) => {
+            setSelectedPatient(patient);
+            // Auto-open drawer on mobile
+            if (window.innerWidth < 768) {
+              setDrawerOpen(true);
+            }
+          }} />
         </main>
       </div>
     );
   }
 
   // Patient outreach generation view
+  const mainContent = (
+    <div className="mx-auto max-w-3xl space-y-6">
+      {/* Patient context card */}
+      <PatientCard patient={selectedPatient} />
+
+      {/* Error state */}
+      {error && (
+        <div className="animate-fade-in-up flex items-start gap-3 rounded-lg border border-red-200/60 bg-red-50/50 p-4">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <div>
+            <p className="text-[13px] font-medium text-red-800">
+              Generation failed
+            </p>
+            <p className="mt-0.5 text-[12px] text-red-600/80">
+              {error}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {isGenerating && (
+        <LoadingSkeleton
+          isStreaming={isStreaming}
+          streamChars={streamChars}
+        />
+      )}
+
+      {/* Generated messages */}
+      {response && !isGenerating && (
+        <MessageOutput response={response} />
+      )}
+
+      {/* Empty state */}
+      {!response && !isGenerating && !error && (
+        <div className="flex items-center justify-center rounded-xl border border-dashed border-border/60 py-16">
+          <div className="text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
+              <Sparkles className="h-5 w-5 text-muted-foreground/30" />
+            </div>
+            <p className="text-[13px] font-medium text-muted-foreground/60">
+              Configure settings and generate
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground/40">
+              AI-powered messages tailored to this patient
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex h-screen flex-col">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar */}
-        <aside className="flex w-[320px] flex-col border-r border-border/60 bg-card/50">
-          <div className="min-h-0 flex-1">
-            <ScrollArea className="h-full">
-              <div className="p-4 pb-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBack}
-                  className="-ml-2 mb-3 text-[12px] text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-                  Dashboard
-                </Button>
-                <div className="mb-2.5 flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-muted-foreground/50" />
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                    Patients
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  {patients.map((patient) => (
-                    <PatientCard
-                      key={patient.id}
-                      patient={patient}
-                      compact
-                      selected={selectedPatient?.id === patient.id}
-                      onClick={() => {
-                        setSelectedPatient(patient);
-                        setResponse(null);
-                        setError(null);
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
+        {/* Desktop sidebar — hidden on mobile */}
+        <aside className="hidden w-[320px] flex-col border-r border-border/60 bg-card/50 md:flex">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="-ml-2 text-[12px] text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="mr-1 h-3.5 w-3.5" />
+              Dashboard
+            </Button>
 
-              <Separator className="opacity-50" />
+            <PatientSelect
+              patients={patients}
+              selectedPatient={selectedPatient}
+              onSelectPatient={(patient) => {
+                setSelectedPatient(patient);
+                setResponse(null);
+                setError(null);
+              }}
+            />
 
-              <div className="p-4">
-                <OutreachControls
-                  onGenerate={handleGenerate}
-                  isGenerating={isGenerating}
-                  disabled={!selectedPatient}
-                />
-              </div>
-            </ScrollArea>
+            <OutreachControls
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              disabled={!selectedPatient}
+            />
           </div>
         </aside>
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto bg-background">
-          <div className="p-8">
-            <div className="mx-auto max-w-3xl space-y-6">
-              {/* Patient context card */}
-              <PatientCard patient={selectedPatient} />
-
-              {/* Error state */}
-              {error && (
-                <div className="animate-fade-in-up flex items-start gap-3 rounded-lg border border-red-200/60 bg-red-50/50 p-4">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                  <div>
-                    <p className="text-[13px] font-medium text-red-800">
-                      Generation failed
-                    </p>
-                    <p className="mt-0.5 text-[12px] text-red-600/80">
-                      {error}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Loading state */}
-              {isGenerating && (
-                <LoadingSkeleton
-                  isStreaming={isStreaming}
-                  streamChars={streamChars}
-                />
-              )}
-
-              {/* Generated messages */}
-              {response && !isGenerating && (
-                <MessageOutput response={response} />
-              )}
-
-              {/* Empty state */}
-              {!response && !isGenerating && !error && (
-                <div className="flex items-center justify-center rounded-xl border border-dashed border-border/60 py-16">
-                  <div className="text-center">
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
-                      <Sparkles className="h-5 w-5 text-muted-foreground/30" />
-                    </div>
-                    <p className="text-[13px] font-medium text-muted-foreground/60">
-                      Configure settings and generate
-                    </p>
-                    <p className="mt-1 text-[12px] text-muted-foreground/40">
-                      AI-powered messages tailored to this patient
-                    </p>
-                  </div>
-                </div>
-              )}
+          <div className="p-4 sm:p-8">
+            {/* Mobile: back button + controls drawer */}
+            <div className="mb-4 space-y-3 md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="-ml-2 text-[12px] text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="mr-1 h-3.5 w-3.5" />
+                Dashboard
+              </Button>
+              <MobileControlsDrawer
+                patients={patients}
+                selectedPatient={selectedPatient}
+                onSelectPatient={(patient) => {
+                  setSelectedPatient(patient);
+                  setResponse(null);
+                  setError(null);
+                }}
+                onGenerate={handleGenerate}
+                isGenerating={isGenerating}
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+              />
             </div>
+
+            {mainContent}
           </div>
         </main>
       </div>

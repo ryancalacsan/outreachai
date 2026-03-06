@@ -56,7 +56,7 @@ interface CampaignViewProps {
 
 export function CampaignView({ onSelectPatient }: CampaignViewProps) {
   return (
-    <div className="animate-fade-in-up p-8">
+    <div className="animate-fade-in-up p-4 sm:p-8">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
@@ -70,7 +70,7 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
         </div>
 
         {/* Stats row */}
-        <div className="mb-8 grid grid-cols-4 gap-3 stagger-children">
+        <div className="mb-8 grid grid-cols-2 gap-3 stagger-children sm:grid-cols-4">
           <StatCard
             label="Total Patients"
             value={patients.length}
@@ -110,7 +110,7 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
         </div>
 
         {/* Patient cards */}
-        <div className="grid grid-cols-2 gap-4 stagger-children">
+        <div className="grid grid-cols-1 gap-4 stagger-children sm:grid-cols-2">
           {patients.map((patient) => {
             const action = suggestedActions[patient.id];
             return (
