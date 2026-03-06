@@ -187,6 +187,7 @@ export default function Home() {
               onGenerate={handleGenerate}
               isGenerating={isGenerating}
               disabled={!selectedPatient}
+              patient={selectedPatient}
             />
           </div>
         </aside>

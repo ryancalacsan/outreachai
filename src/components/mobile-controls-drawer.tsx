@@ -64,6 +64,7 @@ export function MobileControlsDrawer({
             }}
             isGenerating={isGenerating}
             disabled={false}
+            patient={selectedPatient}
           />
         </div>
       </DrawerContent>

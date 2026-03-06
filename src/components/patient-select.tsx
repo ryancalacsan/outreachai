@@ -35,15 +35,15 @@ export function PatientSelect({
           if (patient) onSelectPatient(patient);
         }}
       >
-        <SelectTrigger className="w-full text-[13px]">
+        <SelectTrigger className="w-full h-auto text-left text-[13px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {patients.map((patient) => (
             <SelectItem key={patient.id} value={patient.id} className="text-[13px]">
-              <div className="flex items-center gap-2">
+              <div>
                 <span className="font-medium">{patient.name}</span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="block text-[11px] text-muted-foreground">
                   {lifecycleStageLabels[patient.lifecycleStage]} · {careProgramLabels[patient.careProgram]}
                 </span>
               </div>

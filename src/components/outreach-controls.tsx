@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -14,6 +14,8 @@ import {
   MessageTone,
   Channel,
   LLMProvider,
+  LifecycleStage,
+  Patient,
 } from "@/lib/types";
 import { goalLabels, toneLabels, channelLabels } from "@/lib/utils/format";
 import {
@@ -25,6 +27,14 @@ import {
   Loader2,
 } from "lucide-react";
 
+const lifecycleGoalDefaults: Record<LifecycleStage, OutreachGoal> = {
+  eligible: "enrollment",
+  onboarding: "appointment-reminder",
+  engaged: "educational",
+  "at-risk": "re-engagement",
+  lapsed: "win-back",
+};
+
 interface OutreachControlsProps {
   onGenerate: (settings: {
     goal: OutreachGoal;
@@ -35,6 +45,7 @@ interface OutreachControlsProps {
   }) => void;
   isGenerating: boolean;
   disabled: boolean;
+  patient?: Patient | null;
 }
 
 const goals: OutreachGoal[] = [
@@ -99,6 +110,7 @@ export function OutreachControls({
   onGenerate,
   isGenerating,
   disabled,
+  patient,
 }: OutreachControlsProps) {
   const [goal, setGoal] = useState<OutreachGoal>("re-engagement");
   const [tone, setTone] = useState<MessageTone>("warm-supportive");
@@ -108,6 +120,12 @@ export function OutreachControls({
   ]);
   const [provider, setProvider] = useState<LLMProvider>("mock");
   const [accessCode, setAccessCode] = useState("");
+
+  useEffect(() => {
+    if (!patient) return;
+    setGoal(lifecycleGoalDefaults[patient.lifecycleStage]);
+    setSelectedChannels([patient.preferredChannel]);
+  }, [patient?.id]);
 
   const toggleChannel = (channel: Channel) => {
     setSelectedChannels((prev) =>
