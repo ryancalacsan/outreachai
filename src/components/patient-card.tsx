@@ -182,9 +182,9 @@ export function PatientCard({
         <div>
           <SectionLabel>Recent Interactions</SectionLabel>
           <div className="space-y-1.5">
-            {patient.recentInteractions.map((interaction, i) => (
+            {patient.recentInteractions.map((interaction) => (
               <div
-                key={i}
+                key={`${interaction.date}-${interaction.type}`}
                 className="rounded-lg border border-border/40 bg-muted/20 px-3.5 py-2.5 text-[13px]"
               >
                 <div className="flex items-center justify-between">

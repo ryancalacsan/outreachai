@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { LLMGenerateParams, LLMGenerateResult } from "./index";
+import { LLMGenerateParams, LLMGenerateResult, validateLLMResult } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function generateWithClaude(
@@ -35,5 +35,5 @@ export async function generateWithClaude(
   }
 
   const parsed = JSON.parse(textContent.text);
-  return parsed as LLMGenerateResult;
+  return validateLLMResult(parsed);
 }

@@ -2,12 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
-import { generateWithProvider, streamWithProvider, LiveProvider } from "@/lib/llm";
+import { generateWithProvider, streamWithProvider, validateLLMResult, LiveProvider } from "@/lib/llm";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 10;
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+// Periodic cleanup of expired rate limit entries
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now > entry.resetAt) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, CLEANUP_INTERVAL_MS);
+
+const VALID_PROVIDERS = new Set(["mock", "claude", "gemini", "gemini-lite", "gemini-preview"]);
+const VALID_CHANNELS = new Set(["sms", "email", "in-app"]);
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -27,8 +41,38 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const body: GenerateRequest = await request.json();
+  let body: GenerateRequest;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const { patientId, goal, tone, channels, provider, accessCode } = body;
+
+  // Validate required fields
+  if (!patientId || !goal || !tone || !provider || !Array.isArray(channels)) {
+    return NextResponse.json(
+      { error: "Missing required fields: patientId, goal, tone, channels, provider" },
+      { status: 400 }
+    );
+  }
+
+  // Validate provider
+  if (!VALID_PROVIDERS.has(provider)) {
+    return NextResponse.json(
+      { error: `Invalid provider: ${provider}` },
+      { status: 400 }
+    );
+  }
+
+  // Validate channels
+  if (!channels.every((ch) => VALID_CHANNELS.has(ch))) {
+    return NextResponse.json(
+      { error: "Invalid channel value" },
+      { status: 400 }
+    );
+  }
 
   // Validate patient exists
   const patient = getPatientById(patientId);
@@ -134,7 +178,7 @@ function handleStreamingRequest(
         }
 
         // Parse the complete JSON and apply channel filtering
-        const parsed = JSON.parse(fullText);
+        const parsed = validateLLMResult(JSON.parse(fullText));
         const filteredMessages = parsed.channelMessages.filter(
           (cm: { channel: string }) => channels.includes(cm.channel as typeof channels[number])
         );

@@ -12,6 +12,7 @@ import {
   formatDate,
   daysSince,
 } from "@/lib/utils/format";
+import { LifecycleStage } from "@/lib/types";
 import {
   User,
   Calendar,
@@ -21,31 +22,38 @@ import {
   CheckCircle2,
   UserPlus,
   MessageSquareWarning,
+  BookOpen,
+  RotateCcw,
   TrendingUp,
 } from "lucide-react";
 
-const suggestedActions: Record<
-  string,
+const lifecycleActions: Record<
+  LifecycleStage,
   { label: string; icon: React.ReactNode; priority: "urgent" | "normal" }
 > = {
-  maria: {
+  eligible: {
     label: "Initial enrollment outreach",
     icon: <UserPlus className="h-3.5 w-3.5" />,
     priority: "normal",
   },
-  ashley: {
+  onboarding: {
     label: "Schedule first appointment",
     icon: <Calendar className="h-3.5 w-3.5" />,
     priority: "normal",
   },
-  keisha: {
+  engaged: {
+    label: "Continue educational outreach",
+    icon: <BookOpen className="h-3.5 w-3.5" />,
+    priority: "normal",
+  },
+  "at-risk": {
     label: "Urgent re-engagement needed",
     icon: <AlertTriangle className="h-3.5 w-3.5" />,
     priority: "urgent",
   },
-  jennifer: {
+  lapsed: {
     label: "Gentle re-engagement check-in",
-    icon: <MessageSquareWarning className="h-3.5 w-3.5" />,
+    icon: <RotateCcw className="h-3.5 w-3.5" />,
     priority: "normal",
   },
 };
@@ -112,7 +120,7 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
         {/* Patient cards */}
         <div className="grid grid-cols-1 gap-4 stagger-children sm:grid-cols-2">
           {patients.map((patient) => {
-            const action = suggestedActions[patient.id];
+            const action = lifecycleActions[patient.lifecycleStage];
             return (
               <button
                 key={patient.id}

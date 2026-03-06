@@ -56,13 +56,18 @@ export async function generateMessagesStream(
 
     buffer += decoder.decode(value, { stream: true });
 
-    // Parse SSE events from the buffer
-    const lines = buffer.split("\n\n");
-    buffer = lines.pop() || "";
+    // Parse SSE events from the buffer (split on double newline per spec)
+    const events = buffer.split("\n\n");
+    buffer = events.pop() || "";
 
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const data = JSON.parse(line.slice(6));
+    for (const event of events) {
+      // Per SSE spec, concatenate all `data:` lines within one event
+      const dataLines = event
+        .split("\n")
+        .filter((line) => line.startsWith("data: "))
+        .map((line) => line.slice(6));
+      if (dataLines.length === 0) continue;
+      const data = JSON.parse(dataLines.join("\n"));
 
       if (data.type === "chunk") {
         accumulated += data.text;

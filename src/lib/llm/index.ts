@@ -15,7 +15,18 @@ export interface LLMGenerateResult {
   channelMessages: ChannelMessages[];
 }
 
-export type LiveProvider = "claude" | "gemini" | "gemini-lite";
+export function validateLLMResult(parsed: unknown): LLMGenerateResult {
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !Array.isArray((parsed as Record<string, unknown>).channelMessages)
+  ) {
+    throw new Error("Invalid LLM response: missing channelMessages array");
+  }
+  return parsed as LLMGenerateResult;
+}
+
+export type LiveProvider = "claude" | "gemini" | "gemini-lite" | "gemini-preview";
 
 export async function generateWithProvider(
   provider: LiveProvider,
@@ -26,9 +37,18 @@ export async function generateWithProvider(
       return generateWithClaude(params);
     case "gemini":
     case "gemini-lite":
-      return generateWithGemini(params, provider === "gemini-lite" ? "gemini-3.1-flash-lite-preview" : "gemini-2.5-flash");
+    case "gemini-preview":
+      return generateWithGemini(params, geminiModelId(provider));
     default:
       throw new Error(`Unknown provider: ${provider}`);
+  }
+}
+
+function geminiModelId(provider: string): string {
+  switch (provider) {
+    case "gemini-lite": return "gemini-2.5-flash-lite";
+    case "gemini-preview": return "gemini-3.1-flash-lite-preview";
+    default: return "gemini-2.5-flash";
   }
 }
 
@@ -41,7 +61,8 @@ export function streamWithProvider(
       return streamWithClaude(params);
     case "gemini":
     case "gemini-lite":
-      return streamWithGemini(params, provider === "gemini-lite" ? "gemini-3.1-flash-lite-preview" : "gemini-2.5-flash");
+    case "gemini-preview":
+      return streamWithGemini(params, geminiModelId(provider));
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }

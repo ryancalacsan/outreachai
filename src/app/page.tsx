@@ -94,7 +94,7 @@ export default function Home() {
           <CampaignView onSelectPatient={(patient) => {
             setSelectedPatient(patient);
             // Auto-open drawer on mobile
-            if (window.innerWidth < 768) {
+            if (typeof window !== "undefined" && window.innerWidth < 768) {
               setDrawerOpen(true);
             }
           }} />

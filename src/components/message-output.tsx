@@ -67,8 +67,10 @@ export function MessageOutput({ response }: MessageOutputProps) {
             : response.provider === "gemini"
               ? "Gemini 2.5 Flash"
               : response.provider === "gemini-lite"
-                ? "Gemini 3.1 Flash Lite"
-                : "Claude Sonnet"}
+                ? "Gemini 2.5 Flash Lite"
+                : response.provider === "gemini-preview"
+                  ? "Gemini 3.1 Flash Lite"
+                  : "Claude Sonnet"}
         </div>
       </div>
 
@@ -127,9 +129,13 @@ function VariantCard({
     const text = variant.subject
       ? `Subject: ${variant.subject}\n\n${variant.content}`
       : variant.content;
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API may be unavailable in insecure contexts
+    }
   };
 
   return (
@@ -189,6 +195,8 @@ function VariantCard({
       {/* Reasoning footer */}
       <div className="border-t border-border/30">
         <button
+          type="button"
+          aria-expanded={showReasoning}
           onClick={() => setShowReasoning(!showReasoning)}
           className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-medium text-muted-foreground/50 transition-colors hover:text-muted-foreground"
         >

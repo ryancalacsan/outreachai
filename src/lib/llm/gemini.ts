@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { LLMGenerateParams, LLMGenerateResult } from "./index";
+import { LLMGenerateParams, LLMGenerateResult, validateLLMResult } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function generateWithGemini(
@@ -32,5 +32,5 @@ export async function generateWithGemini(
   }
 
   const parsed = JSON.parse(response.text);
-  return parsed as LLMGenerateResult;
+  return validateLLMResult(parsed);
 }

@@ -91,13 +91,18 @@ const providers: {
   },
   {
     value: "gemini-lite",
-    label: "Gemini 3.1 Flash Lite",
+    label: "Gemini 2.5 Flash Lite",
     description: "Google AI — Free tier",
   },
   {
     value: "gemini",
     label: "Gemini 2.5 Flash",
     description: "Google AI — Free tier",
+  },
+  {
+    value: "gemini-preview",
+    label: "Gemini 3.1 Flash Lite",
+    description: "Google AI — Preview",
   },
   {
     value: "claude",
@@ -125,7 +130,7 @@ export function OutreachControls({
     if (!patient) return;
     setGoal(lifecycleGoalDefaults[patient.lifecycleStage]);
     setSelectedChannels([patient.preferredChannel]);
-  }, [patient?.id]);
+  }, [patient?.id, patient?.lifecycleStage, patient?.preferredChannel]);
 
   const toggleChannel = (channel: Channel) => {
     setSelectedChannels((prev) =>
@@ -201,6 +206,8 @@ export function OutreachControls({
           {channelConfig.map(({ value, label, icon }) => (
             <button
               key={value}
+              type="button"
+              aria-pressed={selectedChannels.includes(value)}
               onClick={() => toggleChannel(value)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border py-2 text-[12px] font-medium transition-all duration-150 ${
                 selectedChannels.includes(value)
@@ -241,11 +248,12 @@ export function OutreachControls({
 
       {needsAccessCode && (
         <div className="animate-fade-in-up">
-          <FieldLabel>
+          <FieldLabel htmlFor="access-code">
             <Lock className="h-3 w-3" />
             Access Code
           </FieldLabel>
           <input
+            id="access-code"
             type="password"
             value={accessCode}
             onChange={(e) => setAccessCode(e.target.value)}
@@ -277,10 +285,14 @@ export function OutreachControls({
   );
 }
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+  const Tag = htmlFor ? "label" : "span";
   return (
-    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+    <Tag
+      {...(htmlFor ? { htmlFor } : { role: "presentation" })}
+      className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60"
+    >
       {children}
-    </label>
+    </Tag>
   );
 }
