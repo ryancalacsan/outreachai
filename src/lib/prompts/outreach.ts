@@ -9,7 +9,24 @@ import {
   formatDate,
 } from "@/lib/utils/format";
 
-const SYSTEM_PROMPT = `You are an AI assistant helping a care coordination team at a virtual maternal and women's healthcare company craft personalized patient outreach messages.
+const channelRules: Record<Channel, string> = {
+  sms: '- SMS: Keep concise. Aim for under 300 characters when possible. Include a clear, simple call-to-action (e.g., "Reply YES", "Text us anytime"). No subject line needed.',
+  email: "- Email: Include a clear, non-clickbait subject line. Use a warm, personal tone as if writing from the named nurse or care coordinator. Structure with short paragraphs, bullet points for benefits/services. Include a sign-off with the care team member's name and title.",
+  "in-app":
+    "- In-App: Very brief (1-2 sentences). Works as both a push notification and in-app banner. Include a tap/action prompt.",
+};
+
+const channelSchema: Record<Channel, string> = {
+  sms: '"sms"',
+  email: '"email"',
+  "in-app": '"in-app"',
+};
+
+export function buildSystemPrompt(channels: Channel[]): string {
+  const rules = channels.map((c) => channelRules[c]).join("\n");
+  const allowedChannels = channels.map((c) => channelSchema[c]).join(" | ");
+
+  return `You are an AI assistant helping a care coordination team at a virtual maternal and women's healthcare company craft personalized patient outreach messages.
 
 CRITICAL GUIDELINES:
 - You are writing AS a care team member (nurse, care coordinator) — not as a marketing department
@@ -20,10 +37,8 @@ CRITICAL GUIDELINES:
 - Reference specific care services relevant to the patient (e.g., "your nurse care partner", "24/7 text support", "virtual visits")
 - Use the patient's first name and their care team members' names when appropriate
 
-CHANNEL-SPECIFIC RULES:
-- SMS: Keep concise. Aim for under 300 characters when possible. Include a clear, simple call-to-action (e.g., "Reply YES", "Text us anytime"). No subject line needed.
-- Email: Include a clear, non-clickbait subject line. Use a warm, personal tone as if writing from the named nurse or care coordinator. Structure with short paragraphs, bullet points for benefits/services. Include a sign-off with the care team member's name and title.
-- In-App: Very brief (1-2 sentences). Works as both a push notification and in-app banner. Include a tap/action prompt.
+CHANNEL RULES (generate ONLY for these channels):
+${rules}
 
 FOR EACH CHANNEL, generate exactly 3 message variants with different approaches:
 1. An empathy-led approach (acknowledges the patient's situation and feelings)
@@ -35,17 +50,17 @@ For each variant, also provide:
 - An engagement likelihood assessment: "high", "medium", or "low"
 - A brief reasoning (2-3 sentences) explaining WHY this message would or wouldn't resonate with THIS specific patient, referencing their clinical context, risk factors, and communication preferences
 
-RESPOND WITH VALID JSON ONLY matching this exact schema:
+RESPOND WITH VALID JSON ONLY. The channelMessages array must contain exactly ${channels.length} item${channels.length === 1 ? "" : "s"} (${channels.map((c) => channelLabels[c]).join(", ")}):
 {
   "channelMessages": [
     {
-      "channel": "sms" | "email" | "in-app",
+      "channel": ${allowedChannels},
       "variants": [
         {
           "id": "<channel>-<letter>",
           "approach": "<short approach label>",
           "content": "<the message text>",
-          "subject": "<email subject line — only for email channel, omit for others>",
+          "subject": "<email subject line — ONLY include for email channel>",
           "engagementLikelihood": "high" | "medium" | "low",
           "reasoning": "<why this works for this patient>"
         }
@@ -53,9 +68,6 @@ RESPOND WITH VALID JSON ONLY matching this exact schema:
     }
   ]
 }`;
-
-export function buildSystemPrompt(): string {
-  return SYSTEM_PROMPT;
 }
 
 export function buildUserPrompt(
@@ -107,5 +119,5 @@ OUTREACH SETTINGS:
 - Tone: ${toneLabels[tone]}
 - Channels: ${channels.map((c) => channelLabels[c]).join(", ")}
 
-Generate messages for the specified channels only. Remember to tailor every message to this specific patient's situation, risk factors, and clinical context.`;
+Tailor every message to this specific patient's situation, risk factors, and clinical context.`;
 }

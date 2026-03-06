@@ -78,8 +78,13 @@ export async function POST(request: NextRequest) {
       channels,
     });
 
+    // Filter to only requested channels (LLMs sometimes generate extras)
+    const filteredMessages = result.channelMessages.filter((cm) =>
+      channels.includes(cm.channel)
+    );
+
     const response: GenerateResponse = {
-      channelMessages: result.channelMessages,
+      channelMessages: filteredMessages,
       provider,
       generatedAt: new Date().toISOString(),
     };

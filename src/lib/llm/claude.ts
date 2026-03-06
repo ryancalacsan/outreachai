@@ -15,7 +15,7 @@ export async function generateWithClaude(
   const message = await client.messages.create({
     model: "claude-sonnet-4-5-20250929",
     max_tokens: 4096,
-    system: buildSystemPrompt(),
+    system: buildSystemPrompt(params.channels),
     messages: [
       {
         role: "user",

@@ -38,28 +38,35 @@ export function PatientCard({
     return (
       <button
         onClick={onClick}
-        className={`w-full rounded-lg border p-3 text-left transition-colors ${
+        className={`w-full rounded-lg border p-2.5 text-left transition-all duration-150 ${
           selected
-            ? "border-primary bg-primary/5"
-            : "border-border bg-card hover:border-primary/30 hover:bg-accent/50"
+            ? "border-teal-400/50 bg-teal-50/50 shadow-[0_0_0_1px_oklch(0.68_0.105_178_/_0.15)]"
+            : "border-border/60 bg-card hover:border-teal-300/40 hover:bg-teal-50/20"
         }`}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-              <User className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">{patient.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {patient.age} yrs &middot;{" "}
-                {careProgramLabels[patient.careProgram]}
-              </p>
-            </div>
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+              selected
+                ? "bg-teal-100 ring-1 ring-teal-300/40"
+                : "bg-muted"
+            }`}
+          >
+            <User
+              className={`h-3.5 w-3.5 ${
+                selected ? "text-teal-600" : "text-muted-foreground"
+              }`}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium">{patient.name}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {careProgramLabels[patient.careProgram]}
+            </p>
           </div>
           <Badge
             variant="secondary"
-            className={`text-xs ${lifecycleStageColors[patient.lifecycleStage]}`}
+            className={`shrink-0 text-[10px] ${lifecycleStageColors[patient.lifecycleStage]}`}
           >
             {lifecycleStageLabels[patient.lifecycleStage]}
           </Badge>
@@ -69,31 +76,33 @@ export function PatientCard({
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-border bg-card p-5">
+    <div className="animate-fade-in-up space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-            <User className="h-5 w-5 text-primary" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-teal-50 ring-1 ring-teal-200/40">
+            <User className="h-5 w-5 text-teal-600" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">{patient.name}</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-lg font-semibold tracking-tight">
+              {patient.name}
+            </h3>
+            <p className="text-[13px] text-muted-foreground">
               {patient.age} years old &middot; {patient.language} &middot;{" "}
               {patient.insuranceType}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <Badge
             variant="secondary"
-            className={lifecycleStageColors[patient.lifecycleStage]}
+            className={`text-[11px] ${lifecycleStageColors[patient.lifecycleStage]}`}
           >
             {lifecycleStageLabels[patient.lifecycleStage]}
           </Badge>
           <Badge
             variant="secondary"
-            className={riskLevelColors[patient.riskLevel]}
+            className={`text-[11px] ${riskLevelColors[patient.riskLevel]}`}
           >
             {riskLevelLabels[patient.riskLevel]}
           </Badge>
@@ -101,17 +110,17 @@ export function PatientCard({
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg bg-muted/30 px-4 py-3 text-[13px]">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Stethoscope className="h-3.5 w-3.5" />
+          <Stethoscope className="h-3.5 w-3.5 text-muted-foreground/50" />
           <span>{careProgramLabels[patient.careProgram]}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
-          <MessageSquare className="h-3.5 w-3.5" />
+          <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/50" />
           <span>Prefers {patient.preferredChannel.toUpperCase()}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" />
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground/50" />
           <span>
             {patient.enrollmentDate
               ? `Enrolled ${formatDate(patient.enrollmentDate)}`
@@ -119,7 +128,7 @@ export function PatientCard({
           </span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-3.5 w-3.5" />
+          <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />
           <span>
             {patient.lastInteractionDate
               ? `Last contact ${daysSince(patient.lastInteractionDate)}d ago`
@@ -131,13 +140,16 @@ export function PatientCard({
       {/* Risk factors */}
       {patient.riskFactors.length > 0 && (
         <div>
-          <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <AlertTriangle className="h-3 w-3" />
+          <SectionLabel icon={<AlertTriangle className="h-3 w-3" />}>
             Risk Factors
-          </div>
+          </SectionLabel>
           <div className="flex flex-wrap gap-1.5">
             {patient.riskFactors.map((factor) => (
-              <Badge key={factor} variant="outline" className="text-xs font-normal">
+              <Badge
+                key={factor}
+                variant="outline"
+                className="border-border/60 text-[11px] font-normal text-muted-foreground"
+              >
                 {factor}
               </Badge>
             ))}
@@ -147,21 +159,18 @@ export function PatientCard({
 
       {/* Care team */}
       <div>
-        <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          <Shield className="h-3 w-3" />
+        <SectionLabel icon={<Shield className="h-3 w-3" />}>
           Care Team
-        </div>
-        <p className="text-sm">
+        </SectionLabel>
+        <p className="text-[13px]">
           {patient.careTeam.nurseName} &middot; {patient.careTeam.providerName}
         </p>
       </div>
 
       {/* Clinical notes */}
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Clinical Context
-        </p>
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <SectionLabel>Clinical Context</SectionLabel>
+        <p className="text-[13px] leading-[1.6] text-muted-foreground">
           {patient.clinicalNotes}
         </p>
       </div>
@@ -169,19 +178,20 @@ export function PatientCard({
       {/* Recent interactions */}
       {patient.recentInteractions.length > 0 && (
         <div>
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Recent Interactions
-          </p>
-          <div className="space-y-2">
+          <SectionLabel>Recent Interactions</SectionLabel>
+          <div className="space-y-1.5">
             {patient.recentInteractions.map((interaction, i) => (
-              <div key={i} className="rounded-md bg-muted/50 px-3 py-2 text-sm">
+              <div
+                key={i}
+                className="rounded-lg border border-border/40 bg-muted/20 px-3.5 py-2.5 text-[13px]"
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{interaction.type}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground/60">
                     {formatDate(interaction.date)}
                   </span>
                 </div>
-                <p className="mt-0.5 text-muted-foreground">
+                <p className="mt-0.5 leading-[1.5] text-muted-foreground">
                   {interaction.summary}
                 </p>
               </div>
@@ -189,6 +199,21 @@ export function PatientCard({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SectionLabel({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+      {icon}
+      {children}
     </div>
   );
 }

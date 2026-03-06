@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,12 +15,15 @@ import {
   Channel,
   LLMProvider,
 } from "@/lib/types";
+import { goalLabels, toneLabels, channelLabels } from "@/lib/utils/format";
 import {
-  goalLabels,
-  toneLabels,
-  channelLabels,
-} from "@/lib/utils/format";
-import { Sparkles, Lock } from "lucide-react";
+  Sparkles,
+  Lock,
+  MessageSquare,
+  Mail,
+  Bell,
+  Loader2,
+} from "lucide-react";
 
 interface OutreachControlsProps {
   onGenerate: (settings: {
@@ -51,12 +53,41 @@ const tones: MessageTone[] = [
   "casual-friendly",
 ];
 
-const channels: Channel[] = ["sms", "email", "in-app"];
+const channelConfig: { value: Channel; label: string; icon: React.ReactNode }[] =
+  [
+    {
+      value: "sms",
+      label: "SMS",
+      icon: <MessageSquare className="h-3.5 w-3.5" />,
+    },
+    { value: "email", label: "Email", icon: <Mail className="h-3.5 w-3.5" /> },
+    {
+      value: "in-app",
+      label: "In-App",
+      icon: <Bell className="h-3.5 w-3.5" />,
+    },
+  ];
 
-const providers: { value: LLMProvider; label: string; description: string }[] = [
-  { value: "mock", label: "Demo Mode", description: "Pre-generated responses" },
-  { value: "gemini", label: "Gemini 2.5 Flash", description: "Google AI — Free tier" },
-  { value: "claude", label: "Claude Sonnet", description: "Anthropic — API key required" },
+const providers: {
+  value: LLMProvider;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "mock",
+    label: "Demo Mode",
+    description: "Pre-generated responses",
+  },
+  {
+    value: "gemini",
+    label: "Gemini 2.5 Flash",
+    description: "Google AI — Free tier",
+  },
+  {
+    value: "claude",
+    label: "Claude Sonnet",
+    description: "Anthropic — API key required",
+  },
 ];
 
 export function OutreachControls({
@@ -94,21 +125,27 @@ export function OutreachControls({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Section label */}
+      <div className="flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5 text-muted-foreground/50" />
+        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+          Outreach Configuration
+        </span>
+      </div>
+
       <div>
-        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Outreach Goal
-        </label>
+        <FieldLabel>Outreach Goal</FieldLabel>
         <Select
           value={goal}
           onValueChange={(v) => setGoal(v as OutreachGoal)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full text-[13px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {goals.map((g) => (
-              <SelectItem key={g} value={g}>
+              <SelectItem key={g} value={g} className="text-[13px]">
                 {goalLabels[g]}
               </SelectItem>
             ))}
@@ -117,19 +154,17 @@ export function OutreachControls({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Message Tone
-        </label>
+        <FieldLabel>Message Tone</FieldLabel>
         <Select
           value={tone}
           onValueChange={(v) => setTone(v as MessageTone)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full text-[13px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {tones.map((t) => (
-              <SelectItem key={t} value={t}>
+              <SelectItem key={t} value={t} className="text-[13px]">
                 {toneLabels[t]}
               </SelectItem>
             ))}
@@ -138,43 +173,40 @@ export function OutreachControls({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Channels
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {channels.map((channel) => (
+        <FieldLabel>Channels</FieldLabel>
+        <div className="flex gap-1.5">
+          {channelConfig.map(({ value, label, icon }) => (
             <button
-              key={channel}
-              onClick={() => toggleChannel(channel)}
-              className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
-                selectedChannels.includes(channel)
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/30"
+              key={value}
+              onClick={() => toggleChannel(value)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border py-2 text-[12px] font-medium transition-all duration-150 ${
+                selectedChannels.includes(value)
+                  ? "border-teal-400/50 bg-teal-50/60 text-teal-700 shadow-[0_0_0_1px_oklch(0.68_0.105_178_/_0.1)]"
+                  : "border-border/60 bg-card text-muted-foreground hover:border-teal-300/40 hover:text-foreground"
               }`}
             >
-              {channelLabels[channel]}
+              {icon}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          AI Model
-        </label>
+        <FieldLabel>AI Model</FieldLabel>
         <Select
           value={provider}
           onValueChange={(v) => setProvider(v as LLMProvider)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full text-[13px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {providers.map((p) => (
-              <SelectItem key={p.value} value={p.value}>
+              <SelectItem key={p.value} value={p.value} className="text-[13px]">
                 <div className="flex items-center gap-2">
                   <span>{p.label}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {p.description}
                   </span>
                 </div>
@@ -185,17 +217,17 @@ export function OutreachControls({
       </div>
 
       {needsAccessCode && (
-        <div>
-          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="animate-fade-in-up">
+          <FieldLabel>
             <Lock className="h-3 w-3" />
             Access Code
-          </label>
+          </FieldLabel>
           <input
             type="password"
             value={accessCode}
             onChange={(e) => setAccessCode(e.target.value)}
-            placeholder="Enter access code for live API"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Enter access code"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-[13px] placeholder:text-muted-foreground/40 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
           />
         </div>
       )}
@@ -203,12 +235,29 @@ export function OutreachControls({
       <Button
         onClick={handleGenerate}
         disabled={disabled || isGenerating || selectedChannels.length === 0}
-        className="w-full"
+        className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-[13px] font-medium shadow-sm transition-all duration-200 hover:from-teal-700 hover:to-teal-800 hover:shadow-md disabled:from-muted disabled:to-muted"
         size="lg"
       >
-        <Sparkles className="mr-2 h-4 w-4" />
-        {isGenerating ? "Generating..." : "Generate Outreach Messages"}
+        {isGenerating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Generating...
+          </>
+        ) : (
+          <>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Generate Messages
+          </>
+        )}
       </Button>
     </div>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+      {children}
+    </label>
   );
 }

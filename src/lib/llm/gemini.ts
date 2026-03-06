@@ -21,7 +21,7 @@ export async function generateWithGemini(
       params.channels
     ),
     config: {
-      systemInstruction: buildSystemPrompt(),
+      systemInstruction: buildSystemPrompt(params.channels),
       responseMimeType: "application/json",
     },
   });
