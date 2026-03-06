@@ -55,7 +55,7 @@ const channels: Channel[] = ["sms", "email", "in-app"];
 
 const providers: { value: LLMProvider; label: string; description: string }[] = [
   { value: "mock", label: "Demo Mode", description: "Pre-generated responses" },
-  { value: "gemini", label: "Gemini 2.0 Flash", description: "Google AI — Free tier" },
+  { value: "gemini", label: "Gemini 2.5 Flash", description: "Google AI — Free tier" },
   { value: "claude", label: "Claude Sonnet", description: "Anthropic — API key required" },
 ];
 

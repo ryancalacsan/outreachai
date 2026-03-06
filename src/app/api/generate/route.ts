@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
+import { generateWithProvider } from "@/lib/llm";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -68,13 +69,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // TODO: Phase 2 — implement live Claude and Gemini API calls
-  // For now, return mock data even in "live" mode as a fallback
-  const mockResponse = getMockResponse(patientId, goal, tone, channels);
-  const response: GenerateResponse = {
-    ...mockResponse,
-    provider,
-  };
+  // Live LLM generation
+  try {
+    const result = await generateWithProvider(provider, {
+      patient,
+      goal,
+      tone,
+      channels,
+    });
 
-  return NextResponse.json(response);
+    const response: GenerateResponse = {
+      channelMessages: result.channelMessages,
+      provider,
+      generatedAt: new Date().toISOString(),
+    };
+
+    return NextResponse.json(response);
+  } catch (err) {
+    console.error(`[${provider}] Generation error:`, err);
+    const message =
+      err instanceof Error ? err.message : "Failed to generate messages";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

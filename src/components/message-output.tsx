@@ -44,7 +44,7 @@ export function MessageOutput({ response }: MessageOutputProps) {
           {response.provider === "mock"
             ? "Demo Mode"
             : response.provider === "gemini"
-              ? "Gemini 2.0 Flash"
+              ? "Gemini 2.5 Flash"
               : "Claude Sonnet"}
         </Badge>
       </div>
