@@ -59,17 +59,19 @@ export function PatientCard({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-medium">{patient.name}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="truncate text-[13px] font-medium">{patient.name}</p>
+              <Badge
+                variant="secondary"
+                className={`shrink-0 text-[10px] leading-none px-1.5 py-0.5 ${lifecycleStageColors[patient.lifecycleStage]}`}
+              >
+                {lifecycleStageLabels[patient.lifecycleStage]}
+              </Badge>
+            </div>
             <p className="text-[11px] text-muted-foreground">
               {careProgramLabels[patient.careProgram]}
             </p>
           </div>
-          <Badge
-            variant="secondary"
-            className={`shrink-0 text-[10px] ${lifecycleStageColors[patient.lifecycleStage]}`}
-          >
-            {lifecycleStageLabels[patient.lifecycleStage]}
-          </Badge>
         </div>
       </button>
     );

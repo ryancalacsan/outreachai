@@ -130,7 +130,7 @@ export function OutreachControls({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Section label */}
       <div className="flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5 text-muted-foreground/50" />

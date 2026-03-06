@@ -102,49 +102,53 @@ export default function Home() {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar */}
-        <aside className="flex w-[300px] flex-col border-r border-border/60 bg-card/50">
-          <div className="p-4 pb-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="-ml-2 mb-3 text-[12px] text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-              Dashboard
-            </Button>
-            <div className="mb-2.5 flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-muted-foreground/50" />
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                Patients
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {patients.map((patient) => (
-                <PatientCard
-                  key={patient.id}
-                  patient={patient}
-                  compact
-                  selected={selectedPatient?.id === patient.id}
-                  onClick={() => {
-                    setSelectedPatient(patient);
-                    setResponse(null);
-                    setError(null);
-                  }}
+        <aside className="flex w-[320px] flex-col border-r border-border/60 bg-card/50">
+          <div className="min-h-0 flex-1">
+            <ScrollArea className="h-full">
+              <div className="p-4 pb-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBack}
+                  className="-ml-2 mb-3 text-[12px] text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="mr-1 h-3.5 w-3.5" />
+                  Dashboard
+                </Button>
+                <div className="mb-2.5 flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground/50" />
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                    Patients
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {patients.map((patient) => (
+                    <PatientCard
+                      key={patient.id}
+                      patient={patient}
+                      compact
+                      selected={selectedPatient?.id === patient.id}
+                      onClick={() => {
+                        setSelectedPatient(patient);
+                        setResponse(null);
+                        setError(null);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="opacity-50" />
+
+              <div className="p-4">
+                <OutreachControls
+                  onGenerate={handleGenerate}
+                  isGenerating={isGenerating}
+                  disabled={!selectedPatient}
                 />
-              ))}
-            </div>
+              </div>
+            </ScrollArea>
           </div>
-
-          <Separator className="opacity-50" />
-
-          <ScrollArea className="flex-1 p-4">
-            <OutreachControls
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              disabled={!selectedPatient}
-            />
-          </ScrollArea>
         </aside>
 
         {/* Main content */}
