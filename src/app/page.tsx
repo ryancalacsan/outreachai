@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { CampaignView } from "@/components/campaign-view";
 import { PatientCard } from "@/components/patient-card";
 import { OutreachControls } from "@/components/outreach-controls";
 import { MessageOutput } from "@/components/message-output";
 import { patients } from "@/lib/data/patients";
-import { generateMessages } from "@/lib/api";
+import { generateMessages, generateMessagesStream } from "@/lib/api";
 import { Patient, GenerateResponse } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +18,8 @@ export default function Home() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [response, setResponse] = useState<GenerateResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamChars, setStreamChars] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (
@@ -26,21 +28,53 @@ export default function Home() {
     if (!selectedPatient) return;
 
     setIsGenerating(true);
+    setIsStreaming(false);
+    setStreamChars(0);
     setError(null);
     setResponse(null);
 
-    try {
-      const result = await generateMessages({
-        patientId: selectedPatient.id,
-        ...settings,
-      });
-      setResponse(result);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to generate messages"
-      );
-    } finally {
-      setIsGenerating(false);
+    const request = {
+      patientId: selectedPatient.id,
+      ...settings,
+    };
+
+    // Use streaming for live providers, regular fetch for mock
+    if (settings.provider !== "mock") {
+      try {
+        setIsStreaming(true);
+        await generateMessagesStream(request, {
+          onChunk: (_text, accumulated) => {
+            setStreamChars(accumulated.length);
+          },
+          onDone: (result) => {
+            setResponse(result);
+            setIsGenerating(false);
+            setIsStreaming(false);
+          },
+          onError: (errorMsg) => {
+            setError(errorMsg);
+            setIsGenerating(false);
+            setIsStreaming(false);
+          },
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to generate messages"
+        );
+        setIsGenerating(false);
+        setIsStreaming(false);
+      }
+    } else {
+      try {
+        const result = await generateMessages(request);
+        setResponse(result);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to generate messages"
+        );
+      } finally {
+        setIsGenerating(false);
+      }
     }
   };
 
@@ -136,7 +170,12 @@ export default function Home() {
               )}
 
               {/* Loading state */}
-              {isGenerating && <LoadingSkeleton />}
+              {isGenerating && (
+                <LoadingSkeleton
+                  isStreaming={isStreaming}
+                  streamChars={streamChars}
+                />
+              )}
 
               {/* Generated messages */}
               {response && !isGenerating && (
@@ -167,19 +206,56 @@ export default function Home() {
   );
 }
 
-function LoadingSkeleton() {
+function LoadingSkeleton({
+  isStreaming,
+  streamChars,
+}: {
+  isStreaming: boolean;
+  streamChars: number;
+}) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="animate-fade-in-up space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="loading-dots flex gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="loading-dots flex gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+          </div>
+          <span className="text-[13px] font-medium text-muted-foreground">
+            {isStreaming
+              ? "Streaming from AI model..."
+              : "Generating personalized messages..."}
+          </span>
         </div>
-        <span className="text-[13px] font-medium text-muted-foreground">
-          Generating personalized messages...
-        </span>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground/50">
+          {isStreaming && streamChars > 0 && (
+            <span className="tabular-nums">
+              {streamChars.toLocaleString()} chars
+            </span>
+          )}
+          <span className="tabular-nums">{elapsed}s</span>
+        </div>
       </div>
+
+      {/* Streaming progress bar */}
+      {isStreaming && (
+        <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
+          <div className="h-full animate-pulse rounded-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
+            style={{ width: streamChars > 0 ? `${Math.min(95, Math.log(streamChars) * 12)}%` : "5%" }}
+          />
+        </div>
+      )}
 
       {/* Skeleton cards */}
       <div className="space-y-3">

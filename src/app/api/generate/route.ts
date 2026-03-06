@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
-import { generateWithProvider } from "@/lib/llm";
+import { generateWithProvider, streamWithProvider } from "@/lib/llm";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -69,7 +69,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Live LLM generation
+  // Check if client wants streaming
+  const wantsStream = request.headers.get("accept") === "text/event-stream";
+
+  if (wantsStream) {
+    return handleStreamingRequest(provider, patient, goal, tone, channels);
+  }
+
+  // Non-streaming fallback
   try {
     const result = await generateWithProvider(provider, {
       patient,
@@ -78,7 +85,6 @@ export async function POST(request: NextRequest) {
       channels,
     });
 
-    // Filter to only requested channels (LLMs sometimes generate extras)
     const filteredMessages = result.channelMessages.filter((cm) =>
       channels.includes(cm.channel)
     );
@@ -96,4 +102,70 @@ export async function POST(request: NextRequest) {
       err instanceof Error ? err.message : "Failed to generate messages";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+function handleStreamingRequest(
+  provider: "claude" | "gemini",
+  patient: Parameters<typeof generateWithProvider>[1]["patient"],
+  goal: Parameters<typeof generateWithProvider>[1]["goal"],
+  tone: Parameters<typeof generateWithProvider>[1]["tone"],
+  channels: Parameters<typeof generateWithProvider>[1]["channels"]
+) {
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const gen = streamWithProvider(provider, {
+          patient,
+          goal,
+          tone,
+          channels,
+        });
+
+        let fullText = "";
+
+        for await (const chunk of gen) {
+          fullText += chunk;
+          // Send chunk as SSE data event
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "chunk", text: chunk })}\n\n`)
+          );
+        }
+
+        // Parse the complete JSON and apply channel filtering
+        const parsed = JSON.parse(fullText);
+        const filteredMessages = parsed.channelMessages.filter(
+          (cm: { channel: string }) => channels.includes(cm.channel as typeof channels[number])
+        );
+
+        const response: GenerateResponse = {
+          channelMessages: filteredMessages,
+          provider,
+          generatedAt: new Date().toISOString(),
+        };
+
+        // Send the final parsed response
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "done", response })}\n\n`)
+        );
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to generate messages";
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "error", error: message })}\n\n`)
+        );
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
