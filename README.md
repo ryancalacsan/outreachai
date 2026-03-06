@@ -1,27 +1,38 @@
 # OutreachAI
 
-AI-powered patient outreach message generator for maternal and women's healthcare. Built as a demo for care coordination teams to generate personalized, multi-channel engagement messages using LLMs.
+AI-powered patient outreach message generator for maternal and women's healthcare. Care coordinators select a patient, configure outreach parameters, and generate personalized messages across SMS, email, and in-app channels — each with multiple variants, engagement predictions, and clinical reasoning.
 
-## What It Does
+![OutreachAI — Generated Messages](public/screenshots/outreachai-messages.png)
 
-Care coordinators select a patient, configure outreach parameters (goal, tone, channels), and generate personalized messages across SMS, email, and in-app channels. Each generation produces multiple message variants (A/B/C) with engagement predictions and reasoning.
+## Live Demo
 
-**Key features:**
-- 4 realistic patient profiles with clinical context (pregnancy, postpartum, midlife care)
-- 6 outreach goals: enrollment, onboarding, appointment reminders, re-engagement, win-back, educational
-- 4 message tones: warm/supportive, clinical/informative, urgent/action, casual/friendly
-- Multi-channel output with channel-appropriate formatting
-- A/B/C variant generation with engagement likelihood scoring
-- Demo mode with pre-generated responses (no API key needed)
-- Live mode with Gemini 2.5 Flash and Claude Sonnet
+**[outreachai-one.vercel.app](https://outreachai-one.vercel.app)**
+
+The app works immediately in Demo Mode with pre-generated responses — no API keys needed.
+
+## Features
+
+- **Patient-aware generation** — 4 realistic patient profiles with clinical context (pregnancy, postpartum, midlife care), risk factors, care team info, and interaction history
+- **Multi-channel output** — SMS, email, and in-app messages with channel-appropriate formatting and length
+- **A/B/C variant generation** — Each channel produces 3 message variants with different approaches (empathy-led, resource-focused, clinical-gentle, etc.)
+- **Engagement scoring** — Each variant includes a predicted engagement likelihood (high/medium/low) with clinical reasoning
+- **Smart defaults** — Outreach goal and preferred channel auto-populate based on patient lifecycle stage
+- **6 outreach goals** — Enrollment, onboarding, appointment reminders, re-engagement, win-back, educational
+- **4 message tones** — Warm/supportive, clinical/informative, urgent/action, casual/friendly
+- **Live LLM streaming** — Real-time token streaming with Gemini and Claude, with progress indicators
+- **Responsive design** — Desktop sidebar layout with mobile bottom sheet drawer
+
+![OutreachAI — Campaign Dashboard](public/screenshots/outreachai-dashboard.png)
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router) with React 19
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS v4 + shadcn/ui v4
-- **LLM Providers:** Google Gemini 2.5 Flash, Anthropic Claude Sonnet
-- **Deployment:** Vercel
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router), React 19 |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4, shadcn/ui v4 |
+| LLM Providers | Google Gemini (2.5 Flash, 2.5 Flash Lite, 3.1 Flash Lite Preview), Anthropic Claude Sonnet |
+| Deployment | Vercel |
 
 ## Getting Started
 
@@ -30,7 +41,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The app works immediately in Demo Mode with no configuration.
+Open [http://localhost:3000](http://localhost:3000). Select **Demo Mode** to explore the full app with no configuration.
 
 ### Live AI Mode
 
@@ -42,46 +53,52 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 DEMO_ACCESS_CODE=your_access_code
 ```
 
-Select a live AI model in the sidebar and enter the access code to generate messages.
+Select a live AI model in the sidebar and enter the access code to generate.
 
 ## Architecture
 
 ```
 src/
   app/
-    api/generate/     # POST endpoint — routes to mock or live LLM
-    page.tsx           # Main page (campaign dashboard + generation view)
-    globals.css        # Theme, animations, custom properties
+    api/generate/          # POST endpoint — routes to mock or live LLM
+    page.tsx               # Main layout (campaign dashboard + generation view)
+    globals.css            # Theme, animations, custom properties
   components/
-    campaign-view.tsx  # Dashboard with patient overview and stats
-    patient-card.tsx   # Patient context display (compact + full)
-    outreach-controls.tsx  # Sidebar configuration panel
-    message-output.tsx # Generated message variants display
-    layout/header.tsx  # App header
-    ui/               # shadcn/ui components
+    campaign-view.tsx      # Dashboard with patient overview and stats
+    patient-card.tsx       # Patient context display (compact + full)
+    patient-select.tsx     # Patient dropdown with lifecycle/program tags
+    outreach-controls.tsx  # Configuration panel (goal, tone, channels, model)
+    message-output.tsx     # Generated message variants with tabs
+    mobile-controls-drawer.tsx  # Bottom sheet for mobile
+    layout/header.tsx      # App header
+    ui/                    # shadcn/ui primitives
   lib/
     data/
-      patients.ts     # 4 patient profiles with clinical context
-      mock-responses.ts  # Pre-generated demo responses
+      patients.ts          # 4 patient profiles with clinical context
+      mock-responses.ts    # Pre-generated demo responses
     llm/
-      index.ts        # Provider factory (routes to gemini/claude)
-      gemini.ts       # Google Gemini integration
-      claude.ts       # Anthropic Claude integration
+      index.ts             # Provider factory + response validation
+      gemini.ts            # Google Gemini integration
+      gemini-stream.ts     # Gemini SSE streaming
+      claude.ts            # Anthropic Claude integration
+      claude-stream.ts     # Claude SSE streaming
     prompts/
-      outreach.ts     # Dynamic system + user prompt construction
-    types.ts          # Shared TypeScript types
-    api.ts            # Client-side fetch helper
-    utils/format.ts   # Label maps, date formatting
+      outreach.ts          # Dynamic system + user prompt construction
+    types.ts               # Shared TypeScript types
+    api.ts                 # Client-side fetch + SSE stream parser
+    utils/format.ts        # Label maps, date formatting
 ```
 
 ## Design Decisions
 
-- **Dynamic prompts:** System prompts only include rules for selected channels, reducing token usage
-- **Server-side filtering:** Channel filtering on the response as a safety net for LLM non-compliance
-- **Rate limiting:** In-memory rate limiting (10 req/hr per IP) for live mode
-- **Access code gating:** Live LLM endpoints require an access code to prevent unauthorized API usage
-- **Mock-first:** Demo mode is the default, so the app is fully functional without any API keys
-- **Smart fallback:** Mock mode tries exact match, then goal-match, then tone-match, then any patient scenario before falling back to generic responses
+- **Dynamic prompts** — System prompts only include rules for selected channels, reducing token usage and improving compliance
+- **Server-side filtering** — Channel filtering on the response as a safety net for LLM non-compliance
+- **Response validation** — LLM output is validated for expected shape before being returned to the client
+- **Rate limiting** — In-memory rate limiting (10 req/hr per IP) with periodic cleanup for live mode
+- **Access code gating** — Live LLM endpoints require an access code to prevent unauthorized API usage
+- **Mock-first** — Demo mode is the default, so the app is fully functional without any API keys
+- **Smart fallback** — Mock mode tries exact match, then goal-match, then tone-match, then any patient scenario before falling back to generic responses
+- **Input validation** — API route validates request body, required fields, provider, and channel values at the boundary
 
 ## What I'd Build Next
 
@@ -89,7 +106,6 @@ src/
 - **A/B test tracking** — Record which variant a coordinator selects and track engagement outcomes over time
 - **Analytics dashboard** — Visualize outreach volume, channel performance, and engagement rates across the patient population
 - **EHR integration** — Pull real patient context from Epic/Cerner FHIR APIs instead of static profiles
-- **Streaming responses** — Token-by-token rendering for live LLM mode to improve perceived performance
 - **Care team collaboration** — Allow nurses to edit, approve, and schedule generated messages directly
 - **Compliance review workflow** — Flag messages for clinical review before sending, with audit trail
 - **Batch generation** — Generate outreach for an entire patient cohort at once with campaign-level controls
