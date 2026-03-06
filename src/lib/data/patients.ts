@@ -18,7 +18,7 @@ export const patients: Patient[] = [
     riskFactors: ["First pregnancy", "No prior prenatal care established"],
     recentInteractions: [],
     clinicalNotes:
-      "Eligible through employer benefit. First pregnancy, 12 weeks gestation based on health plan data. No previous engagement with Pomelo. Primary care physician referral noted in eligibility file.",
+      "Eligible through employer benefit. First pregnancy, 12 weeks gestation based on health plan data. No previous engagement with care programs. Primary care physician referral noted in eligibility file.",
     enrollmentDate: null,
     lastInteractionDate: null,
     missedAppointments: 0,
@@ -44,7 +44,7 @@ export const patients: Patient[] = [
     ],
     recentInteractions: [
       {
-        date: "2025-02-20",
+        date: "2026-02-20",
         type: "Enrollment call",
         summary:
           "Completed enrollment via phone. Expressed interest in 24/7 text support. Mentioned feeling overwhelmed with work schedule.",
@@ -52,8 +52,8 @@ export const patients: Patient[] = [
     ],
     clinicalNotes:
       "Enrolled 2 weeks ago via phone outreach. Has not yet scheduled initial virtual visit with care team. Prior pregnancy resulted in delivery at 35 weeks. Currently 18 weeks gestation. Works full-time as a retail manager with irregular hours.",
-    enrollmentDate: "2025-02-20",
-    lastInteractionDate: "2025-02-20",
+    enrollmentDate: "2026-02-20",
+    lastInteractionDate: "2026-02-20",
     missedAppointments: 0,
   },
   {
@@ -78,18 +78,18 @@ export const patients: Patient[] = [
     ],
     recentInteractions: [
       {
-        date: "2025-01-15",
+        date: "2026-01-15",
         type: "Virtual visit",
         summary:
           "Reviewed blood glucose log with nurse. Levels improving but inconsistent. Patient mentioned difficulty affording glucose testing strips.",
       },
       {
-        date: "2025-01-22",
+        date: "2026-01-22",
         type: "Missed check-in",
         summary: "Scheduled phone check-in — no answer. Voicemail left.",
       },
       {
-        date: "2025-02-01",
+        date: "2026-02-01",
         type: "Missed check-in",
         summary:
           "Second consecutive missed check-in. SMS sent with no response.",
@@ -97,8 +97,8 @@ export const patients: Patient[] = [
     ],
     clinicalNotes:
       "Was actively engaged for 3 months after enrollment. Gestational diabetes diagnosed at week 24, currently 30 weeks. Last two scheduled check-ins missed. Previously responsive to SMS. Social worker referral in progress for food assistance program. Transportation barriers noted — relies on public transit.",
-    enrollmentDate: "2024-11-01",
-    lastInteractionDate: "2025-01-15",
+    enrollmentDate: "2025-11-01",
+    lastInteractionDate: "2026-01-15",
     missedAppointments: 2,
   },
   {
@@ -122,19 +122,19 @@ export const patients: Patient[] = [
     ],
     recentInteractions: [
       {
-        date: "2025-01-10",
+        date: "2026-01-10",
         type: "Virtual visit",
         summary:
           "Discussed HRT options with provider. Patient requested time to think about it. Seemed engaged but uncertain.",
       },
       {
-        date: "2025-01-25",
+        date: "2026-01-25",
         type: "In-app message",
         summary:
           "Nurse sent follow-up message about HRT decision. Patient read but did not respond.",
       },
       {
-        date: "2025-02-15",
+        date: "2026-02-15",
         type: "Educational content",
         summary:
           "Sent article on managing perimenopause symptoms naturally. No engagement tracked.",
@@ -142,8 +142,8 @@ export const patients: Patient[] = [
     ],
     clinicalNotes:
       "Enrolled 4 months ago, initially very engaged with weekly check-ins. Engagement has tapered significantly over the past 6 weeks. Appears to be at a decision point regarding HRT. May benefit from peer support or additional education. No clinical urgency but sustained disengagement could lead to churn.",
-    enrollmentDate: "2024-10-15",
-    lastInteractionDate: "2025-01-10",
+    enrollmentDate: "2025-10-15",
+    lastInteractionDate: "2026-01-10",
     missedAppointments: 0,
   },
 ];
