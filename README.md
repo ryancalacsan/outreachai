@@ -81,3 +81,15 @@ src/
 - **Rate limiting:** In-memory rate limiting (10 req/hr per IP) for live mode
 - **Access code gating:** Live LLM endpoints require an access code to prevent unauthorized API usage
 - **Mock-first:** Demo mode is the default, so the app is fully functional without any API keys
+- **Smart fallback:** Mock mode tries exact match, then goal-match, then tone-match, then any patient scenario before falling back to generic responses
+
+## What I'd Build Next
+
+- **Spanish language support** — Maria's profile is already set up for bilingual outreach; extend prompts and UI for language selection
+- **A/B test tracking** — Record which variant a coordinator selects and track engagement outcomes over time
+- **Analytics dashboard** — Visualize outreach volume, channel performance, and engagement rates across the patient population
+- **EHR integration** — Pull real patient context from Epic/Cerner FHIR APIs instead of static profiles
+- **Streaming responses** — Token-by-token rendering for live LLM mode to improve perceived performance
+- **Care team collaboration** — Allow nurses to edit, approve, and schedule generated messages directly
+- **Compliance review workflow** — Flag messages for clinical review before sending, with audit trail
+- **Batch generation** — Generate outreach for an entire patient cohort at once with campaign-level controls
