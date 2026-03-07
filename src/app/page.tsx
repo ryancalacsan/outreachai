@@ -186,6 +186,7 @@ export default function Home() {
             />
 
             <OutreachControls
+              key={selectedPatient?.id}
               onGenerate={handleGenerate}
               isGenerating={isGenerating}
               disabled={!selectedPatient}

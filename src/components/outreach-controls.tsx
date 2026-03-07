@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -17,7 +17,7 @@ import {
   LifecycleStage,
   Patient,
 } from "@/lib/types";
-import { goalLabels, toneLabels, channelLabels } from "@/lib/utils/format";
+import { goalLabels, toneLabels } from "@/lib/utils/format";
 import {
   Sparkles,
   Lock,
@@ -117,20 +117,15 @@ export function OutreachControls({
   disabled,
   patient,
 }: OutreachControlsProps) {
-  const [goal, setGoal] = useState<OutreachGoal>("re-engagement");
+  const [goal, setGoal] = useState<OutreachGoal>(
+    patient ? lifecycleGoalDefaults[patient.lifecycleStage] : "re-engagement"
+  );
   const [tone, setTone] = useState<MessageTone>("warm-supportive");
-  const [selectedChannels, setSelectedChannels] = useState<Channel[]>([
-    "sms",
-    "email",
-  ]);
+  const [selectedChannels, setSelectedChannels] = useState<Channel[]>(
+    patient ? [patient.preferredChannel] : ["sms", "email"]
+  );
   const [provider, setProvider] = useState<LLMProvider>("mock");
   const [accessCode, setAccessCode] = useState("");
-
-  useEffect(() => {
-    if (!patient) return;
-    setGoal(lifecycleGoalDefaults[patient.lifecycleStage]);
-    setSelectedChannels([patient.preferredChannel]);
-  }, [patient?.id, patient?.lifecycleStage, patient?.preferredChannel]);
 
   const toggleChannel = (channel: Channel) => {
     setSelectedChannels((prev) =>

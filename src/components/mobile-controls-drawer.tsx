@@ -58,6 +58,7 @@ export function MobileControlsDrawer({
           />
 
           <OutreachControls
+            key={selectedPatient.id}
             onGenerate={(settings) => {
               onGenerate(settings);
               onOpenChange(false);

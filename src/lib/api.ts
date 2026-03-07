@@ -81,4 +81,7 @@ export async function generateMessagesStream(
       }
     }
   }
+
+  // Stream closed without a done/error event
+  callbacks.onError("Stream ended unexpectedly");
 }

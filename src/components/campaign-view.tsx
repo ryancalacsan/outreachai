@@ -21,7 +21,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   UserPlus,
-  MessageSquareWarning,
   BookOpen,
   RotateCcw,
   TrendingUp,

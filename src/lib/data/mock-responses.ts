@@ -1,4 +1,4 @@
-import { GenerateResponse, Channel } from "@/lib/types";
+import { GenerateResponse } from "@/lib/types";
 
 // High-quality pre-generated mock responses for demo mode.
 // Each patient has a default scenario keyed by `${patientId}-${goal}-${tone}`.

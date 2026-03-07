@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { GenerateResponse, Channel } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { channelLabels } from "@/lib/utils/format";
@@ -197,6 +196,7 @@ function VariantCard({
         <button
           type="button"
           aria-expanded={showReasoning}
+          aria-controls={`reasoning-${variant.id}`}
           onClick={() => setShowReasoning(!showReasoning)}
           className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-medium text-muted-foreground/50 transition-colors hover:text-muted-foreground"
         >
@@ -209,7 +209,7 @@ function VariantCard({
           )}
         </button>
         {showReasoning && (
-          <div className="animate-fade-in-up border-t border-border/20 bg-muted/15 px-4 py-3">
+          <div id={`reasoning-${variant.id}`} className="animate-fade-in-up border-t border-border/20 bg-muted/15 px-4 py-3">
             <p className="text-[12px] leading-[1.6] text-muted-foreground">
               {variant.reasoning}
             </p>

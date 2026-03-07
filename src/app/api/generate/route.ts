@@ -22,6 +22,8 @@ setInterval(() => {
 
 const VALID_PROVIDERS = new Set(["mock", "claude", "gemini", "gemini-lite", "gemini-preview"]);
 const VALID_CHANNELS = new Set(["sms", "email", "in-app"]);
+const VALID_GOALS = new Set(["enrollment", "onboarding", "appointment-reminder", "re-engagement", "win-back", "educational"]);
+const VALID_TONES = new Set(["warm-supportive", "clinical-informative", "urgent-action", "casual-friendly"]);
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
   const { patientId, goal, tone, channels, provider, accessCode } = body;
 
   // Validate required fields
-  if (!patientId || !goal || !tone || !provider || !Array.isArray(channels)) {
+  if (!patientId || !goal || !tone || !provider || !Array.isArray(channels) || typeof patientId !== "string" || patientId.length > 100) {
     return NextResponse.json(
       { error: "Missing required fields: patientId, goal, tone, channels, provider" },
       { status: 400 }
@@ -64,6 +66,14 @@ export async function POST(request: NextRequest) {
       { error: `Invalid provider: ${provider}` },
       { status: 400 }
     );
+  }
+
+  // Validate goal and tone
+  if (!VALID_GOALS.has(goal)) {
+    return NextResponse.json({ error: "Invalid goal value" }, { status: 400 });
+  }
+  if (!VALID_TONES.has(tone)) {
+    return NextResponse.json({ error: "Invalid tone value" }, { status: 400 });
   }
 
   // Validate channels
