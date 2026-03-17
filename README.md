@@ -28,24 +28,29 @@ The app works immediately in Demo Mode with pre-generated responses — no API k
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 (App Router), React 19 |
-| Language | TypeScript |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript |
+| Backend (Python) | FastAPI, Pydantic, uvicorn |
 | Styling | Tailwind CSS v4, shadcn/ui v4 |
 | LLM Providers | Google Gemini (2.5 Flash, 2.5 Flash Lite, 3.1 Flash Lite Preview), Anthropic Claude Sonnet |
-| Deployment | Vercel |
+| LLM SDKs | `@anthropic-ai/sdk` + `@google/genai` (TypeScript), `anthropic` + `google-genai` (Python) |
+| Streaming | Server-Sent Events (SSE) via both Next.js ReadableStream and FastAPI sse-starlette |
+| Containerization | Docker, Docker Compose |
+| Deployment | Vercel (frontend + Next.js API routes) |
 
 ## Getting Started
+
+### Demo Mode (no setup needed)
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Select **Demo Mode** to explore the full app with no configuration.
+Open [http://localhost:3000](http://localhost:3000). Select **Demo Mode** to explore the full app with pre-generated responses.
 
-### Live AI Mode
+### Live AI Mode (Next.js backend)
 
-To use live LLM generation, create a `.env.local` file:
+Create a `.env.local` file:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key
@@ -53,9 +58,61 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 DEMO_ACCESS_CODE=your_access_code
 ```
 
-Select a live AI model in the sidebar and enter the access code to generate.
+```bash
+npm run dev
+```
+
+Select a live AI model in the sidebar and enter the access code to generate. LLM calls are handled by the Next.js API route.
+
+### Live AI Mode (Python backend)
+
+Run both services in separate terminals:
+
+```bash
+# Terminal 1 — FastAPI
+cd backend
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — Next.js (pointed at Python backend)
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000 npm run dev
+```
+
+LLM calls now route through the FastAPI backend. The Python service uses the same `.env.local` file for API keys.
+
+### Docker Compose (full stack)
+
+```bash
+docker compose up --build
+```
+
+This builds and runs both services together. The frontend is pre-configured to call the Python backend. Open [http://localhost:3000](http://localhost:3000) to use the app, or [http://localhost:8000/docs](http://localhost:8000/docs) for the FastAPI Swagger UI.
 
 ## Architecture
+
+The app has two independent backend implementations — a Next.js API route (TypeScript) and a FastAPI service (Python) — both providing the same `/api/generate` endpoint with identical behavior. The frontend can be pointed at either one.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Next.js Frontend                     │
+│              (React 19, Tailwind, shadcn)               │
+└──────────────┬──────────────────────┬───────────────────┘
+               │                      │
+     Default (Vercel)         NEXT_PUBLIC_BACKEND_URL
+               │                      │
+               ▼                      ▼
+  ┌────────────────────┐   ┌─────────────────────┐
+  │  Next.js API Route │   │   FastAPI (Python)   │
+  │    (TypeScript)    │   │  Pydantic, uvicorn   │
+  └────────┬───────────┘   └──────────┬──────────┘
+           │                          │
+           ▼                          ▼
+  ┌────────────────────────────────────────────┐
+  │        LLM APIs (Claude + Gemini)          │
+  └────────────────────────────────────────────┘
+```
+
+### Frontend (TypeScript)
 
 ```
 src/
@@ -89,6 +146,31 @@ src/
     utils/format.ts        # Label maps, date formatting
 ```
 
+### Backend (Python)
+
+```
+backend/
+  pyproject.toml             # Dependencies (FastAPI, Pydantic, anthropic, google-genai)
+  app/
+    main.py                  # FastAPI app, CORS, health check
+    config.py                # Settings via pydantic-settings (env vars)
+    models.py                # Pydantic models (mirrors types.ts)
+    prompts.py               # System + user prompt builders (mirrors outreach.ts)
+    data/
+      patients.py            # Same 4 patient profiles
+    routers/
+      generate.py            # POST /api/generate — validation, rate limiting, SSE streaming
+    llm/
+      __init__.py            # Provider dispatch (Claude/Gemini routing)
+      claude.py              # AsyncAnthropic: generate + stream
+      gemini.py              # Google GenAI async: generate + stream
+  tests/
+    test_models.py           # Pydantic model validation (19 tests)
+    test_prompts.py          # Prompt builder output verification (17 tests)
+    test_patients.py         # Patient data integrity (8 tests)
+    test_endpoint.py         # API endpoint behavior (9 tests)
+```
+
 ## Design Decisions
 
 - **Dynamic prompts** — System prompts only include rules for selected channels, reducing token usage and improving compliance
@@ -99,6 +181,24 @@ src/
 - **Mock-first** — Demo mode is the default, so the app is fully functional without any API keys
 - **Smart fallback** — Mock mode tries exact match, then goal-match, then tone-match, then any patient scenario before falling back to generic responses
 - **Input validation** — API route validates request body, required fields, provider, and channel values at the boundary
+
+## Running Tests
+
+### Python backend
+
+```bash
+cd backend
+uv sync
+uv run pytest tests/ -v
+```
+
+56 tests covering models, prompts, patient data, and API endpoint behavior.
+
+### Frontend
+
+```bash
+npm run lint
+```
 
 ## What I'd Build Next
 

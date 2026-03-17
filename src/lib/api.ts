@@ -1,9 +1,11 @@
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
 
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+
 export async function generateMessages(
   request: GenerateRequest
 ): Promise<GenerateResponse> {
-  const res = await fetch("/api/generate", {
+  const res = await fetch(`${API_BASE}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -27,7 +29,7 @@ export async function generateMessagesStream(
   request: GenerateRequest,
   callbacks: StreamCallbacks
 ): Promise<void> {
-  const res = await fetch("/api/generate", {
+  const res = await fetch(`${API_BASE}/api/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -55,6 +57,9 @@ export async function generateMessagesStream(
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
+
+    // Normalize CRLF to LF so the parser works with both Next.js (\n) and FastAPI (\r\n) SSE
+    buffer = buffer.replace(/\r\n/g, "\n");
 
     // Parse SSE events from the buffer (split on double newline per spec)
     const events = buffer.split("\n\n");
