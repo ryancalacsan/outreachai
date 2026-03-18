@@ -12,6 +12,11 @@ from app.llm.claude import generate_with_claude, stream_with_claude
 from app.llm.gemini import generate_with_gemini, stream_with_gemini
 
 
+CLAUDE_MODELS: dict[str, str] = {
+    "claude": "claude-sonnet-4-6",
+    "claude-haiku": "claude-haiku-4-5",
+}
+
 GEMINI_MODELS: dict[str, str] = {
     "gemini": "gemini-2.5-flash",
     "gemini-lite": "gemini-2.5-flash-lite",
@@ -27,8 +32,9 @@ async def generate_with_provider(
     channels: list[Channel],
 ) -> LLMResult:
     """Dispatch non-streaming generation to the appropriate LLM provider."""
-    if provider == "claude":
-        return await generate_with_claude(patient, goal, tone, channels)
+    if provider in CLAUDE_MODELS:
+        model = CLAUDE_MODELS[provider]
+        return await generate_with_claude(patient, goal, tone, channels, model=model)
 
     model = GEMINI_MODELS.get(provider, "gemini-2.5-flash")
     return await generate_with_gemini(patient, goal, tone, channels, model=model)
@@ -42,8 +48,9 @@ async def stream_with_provider(
     channels: list[Channel],
 ) -> AsyncGenerator[str, None]:
     """Dispatch streaming generation to the appropriate LLM provider."""
-    if provider == "claude":
-        async for chunk in stream_with_claude(patient, goal, tone, channels):
+    if provider in CLAUDE_MODELS:
+        model = CLAUDE_MODELS[provider]
+        async for chunk in stream_with_claude(patient, goal, tone, channels, model=model):
             yield chunk
         return
 

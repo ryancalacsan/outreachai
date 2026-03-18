@@ -31,7 +31,7 @@ The app works immediately in Demo Mode with pre-generated responses — no API k
 | Frontend | Next.js 16 (App Router), React 19, TypeScript |
 | Backend (Python) | FastAPI, Pydantic, uvicorn |
 | Styling | Tailwind CSS v4, shadcn/ui v4 |
-| LLM Providers | Google Gemini (2.5 Flash, 2.5 Flash Lite, 3.1 Flash Lite Preview), Anthropic Claude Sonnet |
+| LLM Providers | Google Gemini (2.5 Flash, 2.5 Flash Lite, 3.1 Flash Lite Preview), Anthropic Claude (Sonnet, Haiku) |
 | LLM SDKs | `@anthropic-ai/sdk` + `@google/genai` (TypeScript), `anthropic` + `google-genai` (Python) |
 | Streaming | Server-Sent Events (SSE) via both Next.js ReadableStream and FastAPI sse-starlette |
 | Containerization | Docker, Docker Compose |
@@ -197,8 +197,11 @@ uv run pytest tests/ -v
 ### Frontend
 
 ```bash
-npm run lint
+npm test        # 135 tests (Vitest)
+npm run lint    # ESLint
 ```
+
+CI runs lint, test, and build on every push to `main` and PR via GitHub Actions.
 
 ## What I'd Build Next
 

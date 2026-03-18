@@ -160,9 +160,15 @@ export async function POST(request: NextRequest) {
 
 function extractFirstJson(text: string): string | null {
   let depth = 0, start = -1;
+  let inString = false, escapeNext = false;
   for (let i = 0; i < text.length; i++) {
-    if (text[i] === "{") { if (depth++ === 0) start = i; }
-    else if (text[i] === "}") { if (--depth === 0 && start !== -1) return text.slice(start, i + 1); }
+    const ch = text[i];
+    if (escapeNext) { escapeNext = false; continue; }
+    if (ch === "\\" && inString) { escapeNext = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") { if (depth++ === 0) start = i; }
+    else if (ch === "}") { if (--depth === 0 && start !== -1) return text.slice(start, i + 1); }
   }
   return null;
 }

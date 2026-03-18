@@ -89,6 +89,35 @@ async def generate(body: GenerateRequest, request: Request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+def _extract_first_json(text: str) -> str | None:
+    """Extract the first complete JSON object from text using brace-depth scanning."""
+    depth = 0
+    start = -1
+    in_string = False
+    escape_next = False
+    for i, ch in enumerate(text):
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == "\\" and in_string:
+            escape_next = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start != -1:
+                return text[start : i + 1]
+    return None
+
+
 def _handle_streaming(provider: LiveProvider, patient, body: GenerateRequest):
     """Return an SSE streaming response matching the frontend protocol."""
 
@@ -101,8 +130,9 @@ def _handle_streaming(provider: LiveProvider, patient, body: GenerateRequest):
                 full_text += chunk
                 yield {"data": json.dumps({"type": "chunk", "text": chunk})}
 
-            # Parse complete JSON and filter channels
-            parsed = LLMResult.from_llm_json(json.loads(full_text))
+            # Extract first complete JSON object (handles markdown fences, trailing text)
+            clean_text = _extract_first_json(full_text) or full_text
+            parsed = LLMResult.from_llm_json(json.loads(clean_text))
             filtered = [
                 cm for cm in parsed.channel_messages if cm.channel in body.channels
             ]

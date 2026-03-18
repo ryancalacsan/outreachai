@@ -21,8 +21,8 @@ OutreachGoal = Literal[
 MessageTone = Literal[
     "warm-supportive", "clinical-informative", "urgent-action", "casual-friendly"
 ]
-LLMProvider = Literal["claude", "gemini", "gemini-lite", "gemini-preview", "mock"]
-LiveProvider = Literal["claude", "gemini", "gemini-lite", "gemini-preview"]
+LLMProvider = Literal["claude", "claude-haiku", "gemini", "gemini-lite", "gemini-preview", "mock"]
+LiveProvider = Literal["claude", "claude-haiku", "gemini", "gemini-lite", "gemini-preview"]
 
 
 # --- Nested models ---

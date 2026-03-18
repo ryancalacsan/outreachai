@@ -8,6 +8,48 @@ from app.models import Patient, OutreachGoal, MessageTone, Channel, LLMResult
 from app.prompts import build_system_prompt, build_user_prompt
 
 
+OUTREACH_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "channelMessages": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "channel": {"type": "string", "enum": ["sms", "email", "in-app"]},
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "approach": {"type": "string"},
+                                "content": {"type": "string"},
+                                "subject": {"type": "string"},
+                                "engagementLikelihood": {
+                                    "type": "string",
+                                    "enum": ["high", "medium", "low"],
+                                },
+                                "reasoning": {"type": "string"},
+                            },
+                            "required": [
+                                "id",
+                                "approach",
+                                "content",
+                                "engagementLikelihood",
+                                "reasoning",
+                            ],
+                        },
+                    },
+                },
+                "required": ["channel", "variants"],
+            },
+        },
+    },
+    "required": ["channelMessages"],
+}
+
+
 def _get_client() -> AsyncAnthropic:
     if not settings.anthropic_api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not configured")
@@ -19,12 +61,14 @@ async def generate_with_claude(
     goal: OutreachGoal,
     tone: MessageTone,
     channels: list[Channel],
+    *,
+    model: str = "claude-sonnet-4-6",
 ) -> LLMResult:
-    """Generate outreach messages using Claude (non-streaming)."""
+    """Generate outreach messages using Claude (non-streaming, structured output)."""
     client = _get_client()
 
     message = await client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=4096,
         system=build_system_prompt(channels),
         messages=[
@@ -33,6 +77,12 @@ async def generate_with_claude(
                 "content": build_user_prompt(patient, goal, tone, channels),
             },
         ],
+        output_config={
+            "format": {
+                "type": "json_schema",
+                "schema": OUTREACH_RESPONSE_SCHEMA,
+            },
+        },
     )
 
     text_block = next(
@@ -50,12 +100,14 @@ async def stream_with_claude(
     goal: OutreachGoal,
     tone: MessageTone,
     channels: list[Channel],
+    *,
+    model: str = "claude-sonnet-4-6",
 ) -> AsyncGenerator[str, None]:
     """Stream outreach message generation from Claude."""
     client = _get_client()
 
     async with client.messages.stream(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=4096,
         system=build_system_prompt(channels),
         messages=[
