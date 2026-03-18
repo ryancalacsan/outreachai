@@ -33,8 +33,10 @@ The app works immediately in Demo Mode with pre-generated responses — no API k
 | Styling | Tailwind CSS v4, shadcn/ui v4 |
 | LLM Providers | Google Gemini (2.5 Flash, 2.5 Flash Lite, 3.1 Flash Lite Preview), Anthropic Claude (Sonnet, Haiku) |
 | LLM SDKs | `@anthropic-ai/sdk` + `@google/genai` (TypeScript), `anthropic` + `google-genai` (Python) |
+| Validation | Zod v4 (TypeScript), Pydantic v2 (Python) — schemas are single source of truth for types, runtime validation, and JSON Schema generation |
 | Streaming | Server-Sent Events (SSE) via both Next.js ReadableStream and FastAPI sse-starlette |
-| Containerization | Docker, Docker Compose |
+| Containerization | Docker, Docker Compose (Next.js only or full-stack with Python) |
+| CI | GitHub Actions — TypeScript lint/test/build + Python tests (parallel jobs) |
 | Deployment | Vercel (frontend + Next.js API routes) |
 
 ## Getting Started
@@ -80,13 +82,21 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8000 npm run dev
 
 LLM calls now route through the FastAPI backend. The Python service uses the same `.env.local` file for API keys.
 
-### Docker Compose (full stack)
+### Docker Compose
+
+**Next.js only** (uses built-in API route):
 
 ```bash
 docker compose up --build
 ```
 
-This builds and runs both services together. The frontend is pre-configured to call the Python backend. Open [http://localhost:3000](http://localhost:3000) to use the app, or [http://localhost:8000/docs](http://localhost:8000/docs) for the FastAPI Swagger UI.
+**Next.js + Python backend** (frontend proxies LLM calls to FastAPI):
+
+```bash
+docker compose -f docker-compose.python.yml up --build
+```
+
+Both modes serve the app at [http://localhost:3000](http://localhost:3000). The Python variant also exposes [http://localhost:8000/docs](http://localhost:8000/docs) for the FastAPI Swagger UI.
 
 ## Architecture
 
@@ -141,8 +151,10 @@ src/
       claude-stream.ts     # Claude SSE streaming
     prompts/
       outreach.ts          # Dynamic system + user prompt construction
-    types.ts               # Shared TypeScript types
-    api.ts                 # Client-side fetch + SSE stream parser
+    schemas.ts             # Zod schemas — single source of truth for types, validation, and JSON Schema
+    types.ts               # Re-exports types from schemas.ts
+    env.ts                 # Validated environment variable access (via serverEnvSchema)
+    api.ts                 # Client-side fetch + SSE stream parser (with Zod-validated events)
     utils/format.ts        # Label maps, date formatting
 ```
 
@@ -175,12 +187,13 @@ backend/
 
 - **Dynamic prompts** — System prompts only include rules for selected channels, reducing token usage and improving compliance
 - **Server-side filtering** — Channel filtering on the response as a safety net for LLM non-compliance
-- **Response validation** — LLM output is validated for expected shape before being returned to the client
+- **Schema-driven validation** — Zod schemas (TypeScript) and Pydantic models (Python) are the single source of truth for types, API validation, LLM response validation, and JSON Schema generation for structured output
 - **Rate limiting** — In-memory rate limiting (10 req/hr per IP) with periodic cleanup for live mode
 - **Access code gating** — Live LLM endpoints require an access code to prevent unauthorized API usage
 - **Mock-first** — Demo mode is the default, so the app is fully functional without any API keys
 - **Smart fallback** — Mock mode tries exact match, then goal-match, then tone-match, then any patient scenario before falling back to generic responses
-- **Input validation** — API route validates request body, required fields, provider, and channel values at the boundary
+- **Input validation** — API route validates request body with Zod `safeParse` (TypeScript) and Pydantic model binding (Python), with specific error messages for each field
+- **Environment validation** — Server env vars are validated at first use via Zod schema, failing fast with clear messages instead of cryptic runtime errors
 
 ## Running Tests
 
@@ -201,7 +214,7 @@ npm test        # 135 tests (Vitest)
 npm run lint    # ESLint
 ```
 
-CI runs lint, test, and build on every push to `main` and PR via GitHub Actions.
+CI runs TypeScript lint/test/build and Python tests in parallel on every push to `main` and PR via GitHub Actions.
 
 ## What I'd Build Next
 

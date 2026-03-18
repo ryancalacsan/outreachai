@@ -1,19 +1,9 @@
+# Next.js only — uses built-in API route for LLM calls
+# Usage: docker compose up
 services:
-  frontend:
-    build:
-      context: .
-      args:
-        - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+  app:
+    build: .
     ports:
       - "3000:3000"
-    env_file:
-      - .env.local
-    depends_on:
-      - backend
-
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
     env_file:
       - .env.local

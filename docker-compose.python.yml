@@ -1,0 +1,21 @@
+# Next.js + Python FastAPI backend — frontend proxies LLM calls to FastAPI
+# Usage: docker compose -f docker-compose.python.yml up
+services:
+  app:
+    build:
+      context: .
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.local
