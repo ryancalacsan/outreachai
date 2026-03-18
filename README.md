@@ -221,11 +221,11 @@ uv run pytest tests/ -v
 ### Next.js (TypeScript)
 
 ```bash
-npm test        # 136 tests (Vitest)
+npm test        # 137 tests (Vitest)
 npm run lint    # ESLint
 ```
 
-136 tests covering API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), Zod schema validation, LLM provider routing, prompt builders, patient data, mock response fallback logic, JSON sync between backends, component rendering, SSE stream parsing, and format utilities.
+137 tests covering API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), Zod schema validation, LLM provider routing, prompt builders, patient data, mock response fallback logic, JSON sync between backends, component rendering, SSE stream parsing, and format utilities.
 
 CI runs TypeScript lint/test/build and Python tests in parallel on every push to `main` and PR via GitHub Actions.
 

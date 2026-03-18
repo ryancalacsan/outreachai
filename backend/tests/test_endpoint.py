@@ -308,7 +308,7 @@ async def test_streaming_returns_sse(mock_stream, mock_settings, client):
     mock_settings.demo_access_code = "test-code"
 
     async def fake_stream(*args, **kwargs):
-        yield '{"channelMessages":[]}'
+        yield '{"channelMessages":[{"channel":"sms","variants":[{"id":"sms-a","approach":"Test","content":"Hi","engagementLikelihood":"high","reasoning":"R"}]}]}'
 
     mock_stream.return_value = fake_stream()
 
@@ -335,6 +335,11 @@ async def test_streaming_returns_sse(mock_stream, mock_settings, client):
     done_event = next(e for e in events if e["type"] == "done")
     assert "channelMessages" in done_event["response"]
     assert "generatedAt" in done_event["response"]
+    # Verify content actually round-tripped through parse/filter/serialize
+    cms = done_event["response"]["channelMessages"]
+    assert len(cms) == 1
+    assert cms[0]["channel"] == "sms"
+    assert len(cms[0]["variants"]) == 1
 
 
 # --- Valid enum values (mock mode) ---

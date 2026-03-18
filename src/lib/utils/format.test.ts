@@ -13,17 +13,20 @@ import {
 } from "./format";
 
 describe("formatDate", () => {
-  it("formats a date string to en-US short format", () => {
-    // Use T12:00:00 to avoid timezone boundary issues in jsdom
-    expect(formatDate("2026-01-15T12:00:00")).toBe("Jan 15, 2026");
+  it("formats a plain YYYY-MM-DD date string", () => {
+    expect(formatDate("2026-01-15")).toBe("Jan 15, 2026");
   });
 
   it("formats another date correctly", () => {
-    expect(formatDate("2025-12-01T12:00:00")).toBe("Dec 1, 2025");
+    expect(formatDate("2025-12-01")).toBe("Dec 1, 2025");
   });
 
   it("handles leap day", () => {
-    expect(formatDate("2024-02-29T12:00:00")).toBe("Feb 29, 2024");
+    expect(formatDate("2024-02-29")).toBe("Feb 29, 2024");
+  });
+
+  it("handles ISO datetime strings by ignoring time portion", () => {
+    expect(formatDate("2026-01-15T12:00:00")).toBe("Jan 15, 2026");
   });
 });
 
