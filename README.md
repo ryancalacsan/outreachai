@@ -127,7 +127,9 @@ The app has two independent backend implementations — a Next.js API route (Typ
 ```
 src/
   app/
-    api/generate/          # POST endpoint — routes to mock or live LLM
+    api/generate/
+      route.ts             # POST endpoint — routes to mock or live LLM
+      route.test.ts        # API validation, mock mode, live mode, streaming (18 tests)
     page.tsx               # Main layout (campaign dashboard + generation view)
     globals.css            # Theme, animations, custom properties
   components/
@@ -139,23 +141,30 @@ src/
     mobile-controls-drawer.tsx  # Bottom sheet for mobile
     layout/header.tsx      # App header
     ui/                    # shadcn/ui primitives
+    *.test.tsx             # Component tests (39 tests across 4 files)
   lib/
     data/
       patients.ts          # 4 patient profiles with clinical context
-      mock-responses.ts    # Pre-generated demo responses
+      mock-responses.json  # Shared mock data (canonical, read by both backends)
+      mock-responses.ts    # TypeScript wrapper for mock lookup with smart fallback
+      *.test.ts            # Patient data + mock response tests (19 tests)
     llm/
-      index.ts             # Provider factory + response validation
+      index.ts             # Provider factory + Zod response validation
+      index.test.ts        # Validation + provider routing tests (18 tests)
       gemini.ts            # Google Gemini integration
       gemini-stream.ts     # Gemini SSE streaming
       claude.ts            # Anthropic Claude integration
       claude-stream.ts     # Claude SSE streaming
     prompts/
       outreach.ts          # Dynamic system + user prompt construction
+      outreach.test.ts     # Prompt builder tests (17 tests)
     schemas.ts             # Zod schemas — single source of truth for types, validation, and JSON Schema
     types.ts               # Re-exports types from schemas.ts
     env.ts                 # Validated environment variable access (via serverEnvSchema)
     api.ts                 # Client-side fetch + SSE stream parser (with Zod-validated events)
+    api.test.ts            # SSE parsing + fetch tests (10 tests)
     utils/format.ts        # Label maps, date formatting
+    utils/format.test.ts   # Date/label formatting tests (14 tests)
 ```
 
 ### FastAPI (Python Backend)
@@ -180,7 +189,8 @@ backend/
     test_models.py           # Pydantic model validation (19 tests)
     test_prompts.py          # Prompt builder output verification (17 tests)
     test_patients.py         # Patient data integrity (8 tests)
-    test_endpoint.py         # API endpoint behavior (9 tests)
+    test_endpoint.py         # API endpoint behavior (18 tests)
+    test_mock_responses.py   # Mock response lookup, fallback paths, JSON sync (10 tests)
 ```
 
 ## Design Decisions
@@ -205,7 +215,7 @@ uv sync
 uv run pytest tests/ -v
 ```
 
-56 tests covering models, prompts, patient data, and API endpoint behavior.
+74 tests covering models, prompts, patient data, API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), mock response fallback logic, and JSON sync between backends.
 
 ### Frontend
 

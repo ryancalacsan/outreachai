@@ -1,7 +1,10 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
+from app.models import ChannelMessages, LLMResult, MessageVariant
 
 
 @pytest.fixture
@@ -14,6 +17,35 @@ async def client():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
+
+
+# --- Helpers ---
+
+_VALID_BODY = {
+    "patient_id": "maria",
+    "goal": "enrollment",
+    "tone": "warm-supportive",
+    "channels": ["sms"],
+    "provider": "gemini",
+    "access_code": "test-code",
+}
+
+_MOCK_LLM_RESULT = LLMResult(
+    channel_messages=[
+        ChannelMessages(
+            channel="sms",
+            variants=[
+                MessageVariant(
+                    id="sms-a",
+                    approach="Test",
+                    content="Test message",
+                    engagement_likelihood="high",
+                    reasoning="Test reasoning",
+                )
+            ],
+        )
+    ]
+)
 
 
 # --- Health check ---
@@ -191,3 +223,125 @@ async def test_invalid_channel_422(client):
         },
     )
     assert r.status_code == 422
+
+
+# --- Live mode ---
+
+
+@pytest.mark.anyio
+async def test_wrong_access_code(client):
+    r = await client.post(
+        "/api/generate",
+        json={**_VALID_BODY, "access_code": "wrong"},
+    )
+    assert r.status_code == 401
+
+
+@pytest.mark.anyio
+@patch("app.routers.generate.settings")
+@patch("app.routers.generate.generate_with_provider", new_callable=AsyncMock)
+async def test_live_mode_succeeds_with_correct_access_code(
+    mock_generate, mock_settings, client
+):
+    mock_settings.demo_access_code = "test-code"
+    mock_generate.return_value = _MOCK_LLM_RESULT
+    r = await client.post("/api/generate", json=_VALID_BODY)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["provider"] == "gemini"
+    assert "channelMessages" in data
+    assert "generatedAt" in data
+
+
+# --- Rate limiting ---
+
+
+@pytest.mark.anyio
+@patch("app.routers.generate.settings")
+@patch("app.routers.generate.generate_with_provider", new_callable=AsyncMock)
+async def test_rate_limiting(mock_generate, mock_settings, client):
+    mock_settings.demo_access_code = "test-code"
+    mock_generate.return_value = _MOCK_LLM_RESULT
+    unique_ip = "10.99.99.99"
+
+    # Exhaust rate limit (10 requests)
+    for _ in range(10):
+        await client.post(
+            "/api/generate",
+            json=_VALID_BODY,
+            headers={"x-forwarded-for": unique_ip},
+        )
+
+    # 11th should be rate limited
+    r = await client.post(
+        "/api/generate",
+        json=_VALID_BODY,
+        headers={"x-forwarded-for": unique_ip},
+    )
+    assert r.status_code == 429
+    assert "rate limit" in r.json()["error"].lower()
+
+
+# --- Streaming ---
+
+
+@pytest.mark.anyio
+@patch("app.routers.generate.settings")
+@patch("app.routers.generate.stream_with_provider")
+async def test_streaming_returns_sse(mock_stream, mock_settings, client):
+    mock_settings.demo_access_code = "test-code"
+
+    async def fake_stream(*args, **kwargs):
+        yield '{"channelMessages":[]}'
+
+    mock_stream.return_value = fake_stream()
+
+    r = await client.post(
+        "/api/generate",
+        json=_VALID_BODY,
+        headers={"accept": "text/event-stream", "x-forwarded-for": "10.0.0.1"},
+    )
+    assert r.status_code == 200
+    assert "text/event-stream" in r.headers.get("content-type", "")
+
+
+# --- Valid enum values (mock mode) ---
+
+
+@pytest.mark.anyio
+async def test_accepts_all_valid_goals(client):
+    goals = [
+        "enrollment", "onboarding", "appointment-reminder",
+        "re-engagement", "win-back", "educational",
+    ]
+    for goal in goals:
+        r = await client.post(
+            "/api/generate",
+            json={**_VALID_BODY, "provider": "mock", "goal": goal},
+        )
+        assert r.status_code == 200, f"Failed for goal={goal}"
+
+
+@pytest.mark.anyio
+async def test_accepts_all_valid_tones(client):
+    tones = [
+        "warm-supportive", "clinical-informative",
+        "urgent-action", "casual-friendly",
+    ]
+    for tone in tones:
+        r = await client.post(
+            "/api/generate",
+            json={**_VALID_BODY, "provider": "mock", "tone": tone},
+        )
+        assert r.status_code == 200, f"Failed for tone={tone}"
+
+
+@pytest.mark.anyio
+async def test_accepts_all_valid_channels(client):
+    channels = ["sms", "email", "in-app"]
+    for channel in channels:
+        r = await client.post(
+            "/api/generate",
+            json={**_VALID_BODY, "provider": "mock", "channels": [channel]},
+        )
+        assert r.status_code == 200, f"Failed for channel={channel}"
