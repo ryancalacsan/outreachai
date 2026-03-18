@@ -92,22 +92,27 @@ const providers: {
   {
     value: "gemini-lite",
     label: "Gemini 2.5 Flash Lite",
-    description: "Google AI — Free tier",
+    description: "Google — Fast & lightweight",
   },
   {
     value: "gemini",
     label: "Gemini 2.5 Flash",
-    description: "Google AI — Free tier",
+    description: "Google — Balanced",
   },
   {
     value: "gemini-preview",
     label: "Gemini 3.1 Flash Lite",
-    description: "Google AI — Preview",
+    description: "Google — Latest preview",
+  },
+  {
+    value: "claude-haiku",
+    label: "Claude Haiku",
+    description: "Anthropic — Fast & lightweight",
   },
   {
     value: "claude",
     label: "Claude Sonnet",
-    description: "Anthropic — API key required",
+    description: "Anthropic — Highest quality",
   },
 ];
 

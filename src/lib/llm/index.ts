@@ -26,7 +26,39 @@ export function validateLLMResult(parsed: unknown): LLMGenerateResult {
   return parsed as LLMGenerateResult;
 }
 
-export type LiveProvider = "claude" | "gemini" | "gemini-lite" | "gemini-preview";
+export const outreachResponseSchema = {
+  type: "object",
+  properties: {
+    channelMessages: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          channel: { type: "string", enum: ["sms", "email", "in-app"] },
+          variants: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                approach: { type: "string" },
+                content: { type: "string" },
+                subject: { type: "string" },
+                engagementLikelihood: { type: "string", enum: ["high", "medium", "low"] },
+                reasoning: { type: "string" },
+              },
+              required: ["id", "approach", "content", "engagementLikelihood", "reasoning"],
+            },
+          },
+        },
+        required: ["channel", "variants"],
+      },
+    },
+  },
+  required: ["channelMessages"],
+} as const;
+
+export type LiveProvider = "claude" | "claude-haiku" | "gemini" | "gemini-lite" | "gemini-preview";
 
 export async function generateWithProvider(
   provider: LiveProvider,
@@ -34,13 +66,21 @@ export async function generateWithProvider(
 ): Promise<LLMGenerateResult> {
   switch (provider) {
     case "claude":
-      return generateWithClaude(params);
+    case "claude-haiku":
+      return generateWithClaude(params, claudeModelId(provider));
     case "gemini":
     case "gemini-lite":
     case "gemini-preview":
       return generateWithGemini(params, geminiModelId(provider));
     default:
       throw new Error(`Unknown provider: ${provider}`);
+  }
+}
+
+function claudeModelId(provider: string): string {
+  switch (provider) {
+    case "claude-haiku": return "claude-haiku-4-5";
+    default: return "claude-sonnet-4-6";
   }
 }
 
@@ -58,7 +98,8 @@ export function streamWithProvider(
 ): AsyncGenerator<string> {
   switch (provider) {
     case "claude":
-      return streamWithClaude(params);
+    case "claude-haiku":
+      return streamWithClaude(params, claudeModelId(provider));
     case "gemini":
     case "gemini-lite":
     case "gemini-preview":

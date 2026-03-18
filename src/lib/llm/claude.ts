@@ -1,9 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { LLMGenerateParams, LLMGenerateResult, validateLLMResult } from "./index";
+import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
+import { LLMGenerateParams, LLMGenerateResult, validateLLMResult, outreachResponseSchema } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function generateWithClaude(
-  params: LLMGenerateParams
+  params: LLMGenerateParams,
+  model: string = "claude-sonnet-4-6"
 ): Promise<LLMGenerateResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -12,8 +14,8 @@ export async function generateWithClaude(
 
   const client = new Anthropic({ apiKey });
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
+  const message = await client.messages.parse({
+    model,
     max_tokens: 4096,
     system: buildSystemPrompt(params.channels),
     messages: [
@@ -27,13 +29,14 @@ export async function generateWithClaude(
         ),
       },
     ],
+    output_config: {
+      format: jsonSchemaOutputFormat(outreachResponseSchema),
+    },
   });
 
-  const textContent = message.content.find((block) => block.type === "text");
-  if (!textContent || textContent.type !== "text") {
-    throw new Error("No text response from Claude");
+  if (!message.parsed_output) {
+    throw new Error("No structured output from Claude");
   }
 
-  const parsed = JSON.parse(textContent.text);
-  return validateLLMResult(parsed);
+  return validateLLMResult(message.parsed_output);
 }

@@ -89,9 +89,14 @@ describe("generateWithProvider", () => {
     vi.clearAllMocks();
   });
 
-  it("routes claude to generateWithClaude", async () => {
+  it("routes claude to generateWithClaude with sonnet model", async () => {
     await generateWithProvider("claude", mockParams);
-    expect(generateWithClaude).toHaveBeenCalledWith(mockParams);
+    expect(generateWithClaude).toHaveBeenCalledWith(mockParams, "claude-sonnet-4-6");
+  });
+
+  it("routes claude-haiku to generateWithClaude with haiku model", async () => {
+    await generateWithProvider("claude-haiku", mockParams);
+    expect(generateWithClaude).toHaveBeenCalledWith(mockParams, "claude-haiku-4-5");
   });
 
   it("routes gemini to generateWithGemini with correct model", async () => {
@@ -127,9 +132,14 @@ describe("streamWithProvider", () => {
     vi.clearAllMocks();
   });
 
-  it("routes claude to streamWithClaude", () => {
+  it("routes claude to streamWithClaude with sonnet model", () => {
     streamWithProvider("claude", mockParams);
-    expect(streamWithClaude).toHaveBeenCalledWith(mockParams);
+    expect(streamWithClaude).toHaveBeenCalledWith(mockParams, "claude-sonnet-4-6");
+  });
+
+  it("routes claude-haiku to streamWithClaude with haiku model", () => {
+    streamWithProvider("claude-haiku", mockParams);
+    expect(streamWithClaude).toHaveBeenCalledWith(mockParams, "claude-haiku-4-5");
   });
 
   it("routes gemini to streamWithGemini with correct model", () => {

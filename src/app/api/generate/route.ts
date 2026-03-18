@@ -20,7 +20,7 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL_MS);
 
-const VALID_PROVIDERS = new Set(["mock", "claude", "gemini", "gemini-lite", "gemini-preview"]);
+const VALID_PROVIDERS = new Set(["mock", "claude", "claude-haiku", "gemini", "gemini-lite", "gemini-preview"]);
 const VALID_CHANNELS = new Set(["sms", "email", "in-app"]);
 const VALID_GOALS = new Set(["enrollment", "onboarding", "appointment-reminder", "re-engagement", "win-back", "educational"]);
 const VALID_TONES = new Set(["warm-supportive", "clinical-informative", "urgent-action", "casual-friendly"]);
@@ -158,6 +158,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
+function extractFirstJson(text: string): string | null {
+  let depth = 0, start = -1;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "{") { if (depth++ === 0) start = i; }
+    else if (text[i] === "}") { if (--depth === 0 && start !== -1) return text.slice(start, i + 1); }
+  }
+  return null;
+}
+
 function handleStreamingRequest(
   provider: LiveProvider,
   patient: Parameters<typeof generateWithProvider>[1]["patient"],
@@ -187,8 +196,13 @@ function handleStreamingRequest(
           );
         }
 
+        // Extract first complete JSON object from response (handles markdown fences, trailing text)
+        const extractedJson = extractFirstJson(fullText);
+        if (!extractedJson) {
+          throw new Error("No valid JSON found in streamed response");
+        }
         // Parse the complete JSON and apply channel filtering
-        const parsed = validateLLMResult(JSON.parse(fullText));
+        const parsed = validateLLMResult(JSON.parse(extractedJson));
         const filteredMessages = parsed.channelMessages.filter(
           (cm: { channel: string }) => channels.includes(cm.channel as typeof channels[number])
         );

@@ -3,7 +3,8 @@ import { LLMGenerateParams } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function* streamWithClaude(
-  params: LLMGenerateParams
+  params: LLMGenerateParams,
+  model: string = "claude-sonnet-4-6"
 ): AsyncGenerator<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -13,7 +14,7 @@ export async function* streamWithClaude(
   const client = new Anthropic({ apiKey });
 
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-6",
+    model,
     max_tokens: 4096,
     system: buildSystemPrompt(params.channels),
     messages: [
