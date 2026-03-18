@@ -135,14 +135,13 @@ describe("POST /api/generate", () => {
       expect(data.error).toContain("At least one channel");
     });
 
-    it("returns 404 (not 400) for empty channels with unknown patient — validation order issue", async () => {
-      // NOTE: This documents a known validation-order quirk in the route.
-      // The empty-channels check runs AFTER the patient lookup, so an unknown
-      // patient with channels:[] gets 404 instead of the expected 400.
+    it("returns 400 for empty channels with unknown patient — Zod validates before patient lookup", async () => {
       const res = await POST(
         makeRequest({ ...validBody, patientId: "unknown", channels: [] })
       );
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("At least one channel");
     });
   });
 

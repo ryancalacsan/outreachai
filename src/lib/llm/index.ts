@@ -1,8 +1,20 @@
-import { Patient, OutreachGoal, MessageTone, Channel, ChannelMessages } from "@/lib/types";
+import { z } from "zod";
+import {
+  type Patient,
+  type OutreachGoal,
+  type MessageTone,
+  type Channel,
+  type ChannelMessages,
+  type LLMGenerateResult,
+  type LiveProvider,
+  llmResultSchema,
+} from "@/lib/schemas";
 import { generateWithClaude } from "./claude";
 import { generateWithGemini } from "./gemini";
 import { streamWithClaude } from "./claude-stream";
 import { streamWithGemini } from "./gemini-stream";
+
+export type { LLMGenerateResult, LiveProvider };
 
 export interface LLMGenerateParams {
   patient: Patient;
@@ -11,54 +23,19 @@ export interface LLMGenerateParams {
   channels: Channel[];
 }
 
-export interface LLMGenerateResult {
-  channelMessages: ChannelMessages[];
-}
-
 export function validateLLMResult(parsed: unknown): LLMGenerateResult {
-  if (
-    !parsed ||
-    typeof parsed !== "object" ||
-    !Array.isArray((parsed as Record<string, unknown>).channelMessages)
-  ) {
-    throw new Error("Invalid LLM response: missing channelMessages array");
+  const result = llmResultSchema.safeParse(parsed);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join("; ");
+    throw new Error(`Invalid LLM response: ${issues}`);
   }
-  return parsed as LLMGenerateResult;
+  return result.data;
 }
 
-export const outreachResponseSchema = {
-  type: "object",
-  properties: {
-    channelMessages: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          channel: { type: "string", enum: ["sms", "email", "in-app"] },
-          variants: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                id: { type: "string" },
-                approach: { type: "string" },
-                content: { type: "string" },
-                subject: { type: "string" },
-                engagementLikelihood: { type: "string", enum: ["high", "medium", "low"] },
-                reasoning: { type: "string" },
-              },
-              required: ["id", "approach", "content", "engagementLikelihood", "reasoning"],
-            },
-          },
-        },
-        required: ["channel", "variants"],
-      },
-    },
-  },
-  required: ["channelMessages"],
-} as const;
-
-export type LiveProvider = "claude" | "claude-haiku" | "gemini" | "gemini-lite" | "gemini-preview";
+// Derive JSON Schema from Zod — used by Anthropic SDK for structured output
+export const outreachResponseSchema = z.toJSONSchema(llmResultSchema);
 
 export async function generateWithProvider(
   provider: LiveProvider,

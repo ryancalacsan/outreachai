@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GenerateRequest, GenerateResponse } from "@/lib/types";
+import { generateRequestSchema, type GenerateResponse } from "@/lib/schemas";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
 import { generateWithProvider, streamWithProvider, validateLLMResult, LiveProvider } from "@/lib/llm";
@@ -20,11 +20,6 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL_MS);
 
-const VALID_PROVIDERS = new Set(["mock", "claude", "claude-haiku", "gemini", "gemini-lite", "gemini-preview"]);
-const VALID_CHANNELS = new Set(["sms", "email", "in-app"]);
-const VALID_GOALS = new Set(["enrollment", "onboarding", "appointment-reminder", "re-engagement", "win-back", "educational"]);
-const VALID_TONES = new Set(["warm-supportive", "clinical-informative", "urgent-action", "casual-friendly"]);
-
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
@@ -43,58 +38,44 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  let body: GenerateRequest;
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { patientId, goal, tone, channels, provider, accessCode } = body;
+  const parsed = generateRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const body = rawBody as Record<string, unknown> | null;
+    const firstIssue = parsed.error.issues[0];
+    const topField = firstIssue.path[0] as string | undefined;
 
-  // Validate required fields
-  if (!patientId || !goal || !tone || !provider || !Array.isArray(channels) || typeof patientId !== "string" || patientId.length > 100) {
-    return NextResponse.json(
-      { error: "Missing required fields: patientId, goal, tone, channels, provider" },
-      { status: 400 }
-    );
+    let message: string;
+    if (topField === "channels" && firstIssue.code === "too_small") {
+      message = "At least one channel is required";
+    } else if (topField && body && topField in body && body[topField] !== undefined) {
+      // Field was provided but has an invalid value — derive singular name for arrays
+      const fieldName = topField === "channels" ? "channel" : topField;
+      message = `Invalid ${fieldName} value`;
+    } else {
+      // Derive missing field names from Zod issues instead of hardcoding
+      const missingFields = parsed.error.issues
+        .map((i) => i.path[0])
+        .filter((f, idx, arr) => f !== undefined && arr.indexOf(f) === idx);
+      message = missingFields.length > 0
+        ? `Missing required fields: ${missingFields.join(", ")}`
+        : "Invalid request";
+    }
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  // Validate provider
-  if (!VALID_PROVIDERS.has(provider)) {
-    return NextResponse.json(
-      { error: `Invalid provider: ${provider}` },
-      { status: 400 }
-    );
-  }
-
-  // Validate goal and tone
-  if (!VALID_GOALS.has(goal)) {
-    return NextResponse.json({ error: "Invalid goal value" }, { status: 400 });
-  }
-  if (!VALID_TONES.has(tone)) {
-    return NextResponse.json({ error: "Invalid tone value" }, { status: 400 });
-  }
-
-  // Validate channels
-  if (!channels.every((ch) => VALID_CHANNELS.has(ch))) {
-    return NextResponse.json(
-      { error: "Invalid channel value" },
-      { status: 400 }
-    );
-  }
+  const { patientId, goal, tone, channels, provider, accessCode } = parsed.data;
 
   // Validate patient exists
   const patient = getPatientById(patientId);
   if (!patient) {
     return NextResponse.json({ error: "Patient not found" }, { status: 404 });
-  }
-
-  if (channels.length === 0) {
-    return NextResponse.json(
-      { error: "At least one channel is required" },
-      { status: 400 }
-    );
   }
 
   // Mock mode — return pre-generated responses

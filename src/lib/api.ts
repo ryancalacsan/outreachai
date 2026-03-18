@@ -1,4 +1,4 @@
-import { GenerateRequest, GenerateResponse } from "@/lib/types";
+import { type GenerateRequest, type GenerateResponse, sseEventSchema } from "@/lib/schemas";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 
@@ -72,7 +72,13 @@ export async function generateMessagesStream(
         .filter((line) => line.startsWith("data: "))
         .map((line) => line.slice(6));
       if (dataLines.length === 0) continue;
-      const data = JSON.parse(dataLines.join("\n"));
+      const raw = JSON.parse(dataLines.join("\n"));
+      const parsed = sseEventSchema.safeParse(raw);
+      if (!parsed.success) {
+        callbacks.onError(`Malformed SSE event: ${parsed.error.issues[0].message}`);
+        return;
+      }
+      const data = parsed.data;
 
       if (data.type === "chunk") {
         accumulated += data.text;

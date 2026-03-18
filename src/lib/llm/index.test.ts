@@ -60,27 +60,27 @@ describe("validateLLMResult", () => {
   });
 
   it("throws for null input", () => {
-    expect(() => validateLLMResult(null)).toThrow("missing channelMessages array");
+    expect(() => validateLLMResult(null)).toThrow("Invalid LLM response");
   });
 
   it("throws for undefined input", () => {
-    expect(() => validateLLMResult(undefined)).toThrow("missing channelMessages array");
+    expect(() => validateLLMResult(undefined)).toThrow("Invalid LLM response");
   });
 
   it("throws when channelMessages is missing", () => {
     expect(() => validateLLMResult({ foo: "bar" })).toThrow(
-      "missing channelMessages array"
+      "Invalid LLM response"
     );
   });
 
   it("throws when channelMessages is not an array", () => {
     expect(() => validateLLMResult({ channelMessages: "not-array" })).toThrow(
-      "missing channelMessages array"
+      "Invalid LLM response"
     );
   });
 
   it("throws for a primitive", () => {
-    expect(() => validateLLMResult(42)).toThrow("missing channelMessages array");
+    expect(() => validateLLMResult(42)).toThrow("Invalid LLM response");
   });
 });
 
