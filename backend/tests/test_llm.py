@@ -230,3 +230,33 @@ class TestLLMResultValidation:
     def test_rejects_primitive_input(self):
         with pytest.raises(Exception):
             LLMResult.from_llm_json(42)
+
+
+class TestUnknownProvider:
+    @pytest.mark.anyio
+    async def test_generate_unknown_provider_uses_gemini_fallback(self):
+        """Unknown providers fall through to gemini default in Python implementation."""
+        # Python's generate_with_provider uses GEMINI_MODELS.get(provider, default)
+        # for non-Claude providers, so unknown providers hit the Gemini path.
+        # This differs from TS which throws — but we should verify the behavior.
+        from unittest.mock import AsyncMock, patch
+
+        with patch("app.llm.generate_with_gemini", new_callable=AsyncMock) as mock_gemini:
+            mock_gemini.return_value = _MOCK_RESULT
+            await generate_with_provider("gemini-unknown", **_PARAMS)
+            mock_gemini.assert_called_once()
+            # Falls back to default gemini model
+            assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash"
+
+    @pytest.mark.anyio
+    async def test_stream_unknown_provider_uses_gemini_fallback(self):
+        from unittest.mock import patch
+
+        async def fake_stream(*a, **kw):
+            yield "chunk"
+
+        with patch("app.llm.stream_with_gemini") as mock_gemini:
+            mock_gemini.return_value = fake_stream()
+            chunks = [c async for c in stream_with_provider("gemini-unknown", **_PARAMS)]
+            assert chunks == ["chunk"]
+            assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash"

@@ -18,6 +18,11 @@ export function getServerEnv() {
   return env;
 }
 
+/** Reset cached env — for test use only. */
+export function resetEnvCache() {
+  validated = false;
+}
+
 export function requireEnv(key: "ANTHROPIC_API_KEY" | "GEMINI_API_KEY" | "DEMO_ACCESS_CODE"): string {
   const value = getServerEnv()[key];
   if (!value) {

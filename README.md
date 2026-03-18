@@ -150,7 +150,7 @@ src/
       *.test.ts            # Patient data + mock response + JSON sync tests (20 tests)
     llm/
       index.ts             # Provider factory + Zod response validation
-      index.test.ts        # Validation + provider routing tests (18 tests)
+      index.test.ts        # Zod LLM validation + provider routing (18 tests)
       gemini.ts            # Google Gemini integration
       gemini-stream.ts     # Gemini SSE streaming
       claude.ts            # Anthropic Claude integration
@@ -187,11 +187,11 @@ backend/
       gemini.py              # Google GenAI async: generate + stream
   tests/
     test_models.py           # Pydantic model validation (22 tests)
-    test_llm.py              # Provider routing + LLM response validation (16 tests)
+    test_llm.py              # Provider routing + LLM response validation (18 tests)
     test_prompts.py          # Prompt builder output verification (17 tests)
     test_patients.py         # Patient data integrity (8 tests)
-    test_endpoint.py         # API endpoint behavior (18 tests)
-    test_mock_responses.py   # Mock response lookup, fallback paths, JSON sync (9 tests)
+    test_endpoint.py         # API endpoint behavior (19 tests)
+    test_mock_responses.py   # Mock response lookup, fallback paths, JSON sync (10 tests)
 ```
 
 ## Design Decisions
@@ -216,7 +216,7 @@ uv sync
 uv run pytest tests/ -v
 ```
 
-90 tests covering models, LLM provider routing, LLM response validation, prompts, patient data, API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), mock response fallback logic, and JSON sync between backends.
+94 tests covering models, LLM provider routing, LLM response validation, prompts, patient data, API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), mock response fallback logic, and JSON sync between backends.
 
 ### Next.js (TypeScript)
 

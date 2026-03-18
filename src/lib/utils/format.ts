@@ -65,7 +65,11 @@ export const riskLevelColors: Record<RiskLevel, string> = {
 };
 
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  // Parse date portion only to avoid timezone-dependent date shift
+  // (new Date("2026-01-15") parses as UTC midnight, which can display as
+  // the previous day in negative-offset timezones)
+  const [year, month, day] = dateStr.slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",

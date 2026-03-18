@@ -10,6 +10,8 @@ from app.prompts import build_system_prompt, build_user_prompt
 
 def _deref_schema(schema: dict) -> dict:
     """Inline $ref/$defs so the schema is flat (required by Anthropic's API)."""
+    import copy
+    schema = copy.deepcopy(schema)
     defs = schema.pop("$defs", {})
 
     def resolve(node):

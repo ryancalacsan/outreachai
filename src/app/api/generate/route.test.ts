@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import { resetEnvCache } from "@/lib/env";
 
 // Mock LLM module before importing route
 vi.mock("@/lib/llm", () => ({
@@ -57,6 +58,7 @@ async function postMock(body: Record<string, unknown>) {
 
 describe("POST /api/generate", () => {
   beforeEach(() => {
+    resetEnvCache();
     vi.stubEnv("DEMO_ACCESS_CODE", "test-code");
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-16T12:00:00Z"));
@@ -65,6 +67,7 @@ describe("POST /api/generate", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
+    resetEnvCache();
   });
 
   describe("validation", () => {

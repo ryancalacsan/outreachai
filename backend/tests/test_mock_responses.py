@@ -45,6 +45,10 @@ class TestGetMockResponse:
         channels = {cm.channel for cm in r.channel_messages}
         assert channels == {"sms", "email", "in-app"}
 
+    def test_empty_channels_returns_empty_array(self):
+        r = get_mock_response("maria", "enrollment", "warm-supportive", [])
+        assert r.channel_messages == []
+
     def test_generated_at_is_fresh(self):
         r1 = get_mock_response("maria", "enrollment", "warm-supportive", ["sms"])
         r2 = get_mock_response("maria", "enrollment", "warm-supportive", ["sms"])

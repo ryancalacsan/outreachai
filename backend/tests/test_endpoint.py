@@ -166,6 +166,22 @@ async def test_empty_channels_422(client):
 
 
 @pytest.mark.anyio
+async def test_empty_channels_with_unknown_patient_422(client):
+    """Pydantic validates channels before route logic — always 422, not 404."""
+    r = await client.post(
+        "/api/generate",
+        json={
+            "patient_id": "unknown",
+            "goal": "enrollment",
+            "tone": "warm-supportive",
+            "channels": [],
+            "provider": "gemini",
+        },
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.anyio
 async def test_invalid_goal_422(client):
     r = await client.post(
         "/api/generate",
@@ -303,6 +319,22 @@ async def test_streaming_returns_sse(mock_stream, mock_settings, client):
     )
     assert r.status_code == 200
     assert "text/event-stream" in r.headers.get("content-type", "")
+
+    # Validate the SSE body contains chunk and done events
+    body = r.text
+    assert "data:" in body
+    import json as json_mod
+    events = [
+        json_mod.loads(line.removeprefix("data: "))
+        for line in body.splitlines()
+        if line.startswith("data: ")
+    ]
+    types = [e["type"] for e in events]
+    assert "chunk" in types
+    assert "done" in types
+    done_event = next(e for e in events if e["type"] == "done")
+    assert "channelMessages" in done_event["response"]
+    assert "generatedAt" in done_event["response"]
 
 
 # --- Valid enum values (mock mode) ---
