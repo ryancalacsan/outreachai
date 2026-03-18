@@ -35,12 +35,12 @@ export function PatientSelect({
           if (patient) onSelectPatient(patient);
         }}
       >
-        <SelectTrigger className="w-full h-auto text-left text-[13px]">
+        <SelectTrigger className="w-full !h-auto py-2.5 text-left text-[13px] [&_[data-slot=select-value]]:line-clamp-none" size="sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {patients.map((patient) => (
-            <SelectItem key={patient.id} value={patient.id} className="text-[13px]">
+            <SelectItem key={patient.id} value={patient.id} className="py-2.5 text-[13px]">
               <div>
                 <span className="font-medium">{patient.name}</span>
                 <span className="block text-[11px] text-muted-foreground">

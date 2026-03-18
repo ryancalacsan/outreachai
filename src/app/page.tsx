@@ -113,14 +113,28 @@ export default function Home() {
 
       {/* Error state */}
       {error && (
-        <div className="animate-fade-in-up flex items-start gap-3 rounded-lg border border-red-200/60 bg-red-50/50 p-4">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+        <div className={`animate-fade-in-up flex items-start gap-3 rounded-lg border p-4 ${
+          error === "Invalid access code"
+            ? "border-amber-200/60 bg-amber-50/50"
+            : "border-red-200/60 bg-red-50/50"
+        }`}>
+          <AlertCircle className={`mt-0.5 h-4 w-4 shrink-0 ${
+            error === "Invalid access code" ? "text-amber-500" : "text-red-500"
+          }`} />
           <div>
-            <p className="text-[13px] font-medium text-red-800">
-              Generation failed
+            <p className={`text-[13px] font-medium ${
+              error === "Invalid access code" ? "text-amber-800" : "text-red-800"
+            }`}>
+              {error === "Invalid access code"
+                ? "Access code required"
+                : "Generation failed"}
             </p>
-            <p className="mt-0.5 text-[12px] text-red-600/80">
-              {error}
+            <p className={`mt-0.5 text-[12px] ${
+              error === "Invalid access code" ? "text-amber-600/80" : "text-red-600/80"
+            }`}>
+              {error === "Invalid access code"
+                ? "Live AI models are available during demos. Try Demo Mode to explore with pre-generated responses."
+                : error}
             </p>
           </div>
         </div>

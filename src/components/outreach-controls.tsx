@@ -228,15 +228,15 @@ export function OutreachControls({
           value={provider}
           onValueChange={(v) => setProvider(v as LLMProvider)}
         >
-          <SelectTrigger className="w-full text-[13px]">
+          <SelectTrigger className="w-full !h-auto py-2.5 whitespace-normal text-left text-[13px] [&_[data-slot=select-value]]:line-clamp-none" size="sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {providers.map((p) => (
-              <SelectItem key={p.value} value={p.value} className="text-[13px]">
-                <div className="flex items-center gap-2">
-                  <span>{p.label}</span>
-                  <span className="text-[11px] text-muted-foreground">
+              <SelectItem key={p.value} value={p.value} className="py-2.5 text-[13px]">
+                <div>
+                  <span className="font-medium">{p.label}</span>
+                  <span className="block text-[11px] text-muted-foreground">
                     {p.description}
                   </span>
                 </div>
@@ -246,20 +246,33 @@ export function OutreachControls({
         </Select>
       </div>
 
-      {needsAccessCode && (
-        <div className="animate-fade-in-up">
-          <FieldLabel htmlFor="access-code">
-            <Lock className="h-3 w-3" />
-            Access Code
-          </FieldLabel>
-          <input
-            id="access-code"
-            type="password"
-            value={accessCode}
-            onChange={(e) => setAccessCode(e.target.value)}
-            placeholder="Enter access code"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-[13px] placeholder:text-muted-foreground/40 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-          />
+      {needsAccessCode ? (
+        <div className="animate-fade-in-up space-y-3">
+          <div className="rounded-md border border-amber-200/60 bg-amber-50/50 px-3 py-2">
+            <p className="text-[11px] leading-relaxed text-amber-700/80">
+              Live AI models require an access code. Select <span className="font-medium">Demo Mode</span> to explore with pre-generated responses, or request a live demo.
+            </p>
+          </div>
+          <div>
+            <FieldLabel htmlFor="access-code">
+              <Lock className="h-3 w-3" />
+              Access Code
+            </FieldLabel>
+            <input
+              id="access-code"
+              type="password"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              placeholder="Enter access code"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-[13px] placeholder:text-muted-foreground/40 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-md border border-border/40 bg-muted/30 px-3 py-2">
+          <p className="text-[11px] leading-relaxed text-muted-foreground/60">
+            Showing pre-generated responses. This app also supports live generation with Claude and Gemini models.
+          </p>
         </div>
       )}
 
