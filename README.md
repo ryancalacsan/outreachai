@@ -147,7 +147,7 @@ src/
       patients.ts          # 4 patient profiles with clinical context
       mock-responses.json  # Shared mock data (canonical, read by both backends)
       mock-responses.ts    # TypeScript wrapper for mock lookup with smart fallback
-      *.test.ts            # Patient data + mock response tests (19 tests)
+      *.test.ts            # Patient data + mock response + JSON sync tests (20 tests)
     llm/
       index.ts             # Provider factory + Zod response validation
       index.test.ts        # Validation + provider routing tests (18 tests)
@@ -186,11 +186,12 @@ backend/
       claude.py              # AsyncAnthropic: generate + stream
       gemini.py              # Google GenAI async: generate + stream
   tests/
-    test_models.py           # Pydantic model validation (19 tests)
+    test_models.py           # Pydantic model validation (22 tests)
+    test_llm.py              # Provider routing + LLM response validation (16 tests)
     test_prompts.py          # Prompt builder output verification (17 tests)
     test_patients.py         # Patient data integrity (8 tests)
     test_endpoint.py         # API endpoint behavior (18 tests)
-    test_mock_responses.py   # Mock response lookup, fallback paths, JSON sync (10 tests)
+    test_mock_responses.py   # Mock response lookup, fallback paths, JSON sync (9 tests)
 ```
 
 ## Design Decisions
@@ -215,14 +216,16 @@ uv sync
 uv run pytest tests/ -v
 ```
 
-74 tests covering models, prompts, patient data, API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), mock response fallback logic, and JSON sync between backends.
+90 tests covering models, LLM provider routing, LLM response validation, prompts, patient data, API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), mock response fallback logic, and JSON sync between backends.
 
-### Frontend
+### Next.js (TypeScript)
 
 ```bash
-npm test        # 135 tests (Vitest)
+npm test        # 136 tests (Vitest)
 npm run lint    # ESLint
 ```
+
+136 tests covering API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), Zod schema validation, LLM provider routing, prompt builders, patient data, mock response fallback logic, JSON sync between backends, component rendering, SSE stream parsing, and format utilities.
 
 CI runs TypeScript lint/test/build and Python tests in parallel on every push to `main` and PR via GitHub Actions.
 

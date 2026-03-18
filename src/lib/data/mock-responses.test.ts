@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import { describe, it, expect } from "vitest";
 import { getMockResponse } from "./mock-responses";
 
@@ -71,6 +73,16 @@ describe("getMockResponse", () => {
     it("returns empty array when no channels match", () => {
       const res = getMockResponse("maria", "enrollment", "warm-supportive", []);
       expect(res.channelMessages).toEqual([]);
+    });
+  });
+
+  describe("JSON sync", () => {
+    it("TypeScript and Python JSON files are identical", () => {
+      const tsPath = resolve(__dirname, "mock-responses.json");
+      const pyPath = resolve(__dirname, "../../../backend/app/data/mock_responses.json");
+      const tsData = JSON.parse(readFileSync(tsPath, "utf-8"));
+      const pyData = JSON.parse(readFileSync(pyPath, "utf-8"));
+      expect(tsData).toEqual(pyData);
     });
   });
 
