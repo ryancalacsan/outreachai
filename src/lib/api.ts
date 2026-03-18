@@ -59,7 +59,7 @@ export async function generateMessagesStream(
     buffer += decoder.decode(value, { stream: true });
 
     // Normalize CRLF to LF so the parser works with both Next.js (\n) and FastAPI (\r\n) SSE
-    buffer = buffer.replace(/\r\n/g, "\n");
+    buffer = buffer.replace(/\r\n|\r/g, "\n");
 
     // Parse SSE events from the buffer (split on double newline per spec)
     const events = buffer.split("\n\n");

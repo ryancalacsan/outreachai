@@ -35,3 +35,19 @@ jobs:
           ANTHROPIC_API_KEY: placeholder
           GEMINI_API_KEY: placeholder
           DEMO_ACCESS_CODE: placeholder
+
+  python-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: uv sync
+        working-directory: backend
+
+      - name: Test
+        run: uv run pytest tests/ -v
+        working-directory: backend

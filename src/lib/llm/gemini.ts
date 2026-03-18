@@ -1,17 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { LLMGenerateParams, LLMGenerateResult, validateLLMResult } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
+import { requireEnv } from "@/lib/env";
 
 export async function generateWithGemini(
   params: LLMGenerateParams,
   model: string = "gemini-2.5-flash"
 ): Promise<LLMGenerateResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: requireEnv("GEMINI_API_KEY") });
 
   const response = await ai.models.generateContent({
     model,

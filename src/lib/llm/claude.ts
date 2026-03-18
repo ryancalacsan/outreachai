@@ -3,17 +3,13 @@ import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
 import type { JSONSchema } from "json-schema-to-ts";
 import { LLMGenerateParams, LLMGenerateResult, validateLLMResult, outreachResponseSchema } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
+import { requireEnv } from "@/lib/env";
 
 export async function generateWithClaude(
   params: LLMGenerateParams,
   model: string = "claude-sonnet-4-6"
 ): Promise<LLMGenerateResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is not configured");
-  }
-
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
 
   const message = await client.messages.parse({
     model,

@@ -82,7 +82,7 @@ CHANNEL_SCHEMA: dict[str, str] = {
 def format_date(date_str: str) -> str:
     """Format a date string like 'Jan 15, 2026'."""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
-    return dt.strftime("%b %-d, %Y")
+    return f"{dt.strftime('%b')} {dt.day}, {dt.year}"
 
 
 def build_system_prompt(channels: list[Channel]) -> str:

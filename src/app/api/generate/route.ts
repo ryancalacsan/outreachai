@@ -3,6 +3,7 @@ import { generateRequestSchema, type GenerateResponse } from "@/lib/schemas";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
 import { generateWithProvider, streamWithProvider, validateLLMResult, LiveProvider } from "@/lib/llm";
+import { getServerEnv } from "@/lib/env";
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -83,11 +84,14 @@ export async function POST(request: NextRequest) {
     // Simulate a small delay for realism
     await new Promise((resolve) => setTimeout(resolve, 800));
     const mockResponse = getMockResponse(patientId, goal, tone, channels);
-    return NextResponse.json(mockResponse);
+    return NextResponse.json({
+      ...mockResponse,
+      generatedAt: new Date().toISOString(),
+    });
   }
 
   // Live mode — check access code
-  const expectedCode = process.env.DEMO_ACCESS_CODE;
+  const expectedCode = getServerEnv().DEMO_ACCESS_CODE;
   if (!expectedCode || accessCode !== expectedCode) {
     return NextResponse.json(
       { error: "Invalid access code" },

@@ -8,46 +8,25 @@ from app.models import Patient, OutreachGoal, MessageTone, Channel, LLMResult
 from app.prompts import build_system_prompt, build_user_prompt
 
 
-OUTREACH_RESPONSE_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "channelMessages": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "channel": {"type": "string", "enum": ["sms", "email", "in-app"]},
-                    "variants": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {"type": "string"},
-                                "approach": {"type": "string"},
-                                "content": {"type": "string"},
-                                "subject": {"type": "string"},
-                                "engagementLikelihood": {
-                                    "type": "string",
-                                    "enum": ["high", "medium", "low"],
-                                },
-                                "reasoning": {"type": "string"},
-                            },
-                            "required": [
-                                "id",
-                                "approach",
-                                "content",
-                                "engagementLikelihood",
-                                "reasoning",
-                            ],
-                        },
-                    },
-                },
-                "required": ["channel", "variants"],
-            },
-        },
-    },
-    "required": ["channelMessages"],
-}
+def _deref_schema(schema: dict) -> dict:
+    """Inline $ref/$defs so the schema is flat (required by Anthropic's API)."""
+    defs = schema.pop("$defs", {})
+
+    def resolve(node):
+        if isinstance(node, dict):
+            if "$ref" in node:
+                ref_name = node["$ref"].split("/")[-1]
+                return resolve(defs[ref_name])
+            return {k: resolve(v) for k, v in node.items()}
+        if isinstance(node, list):
+            return [resolve(item) for item in node]
+        return node
+
+    return resolve(schema)
+
+
+# Derive JSON Schema from Pydantic model — single source of truth
+OUTREACH_RESPONSE_SCHEMA = _deref_schema(LLMResult.model_json_schema(by_alias=True))
 
 
 def _get_client() -> AsyncAnthropic:

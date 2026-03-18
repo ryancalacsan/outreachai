@@ -21,8 +21,21 @@ RATE_LIMIT = 10
 RATE_WINDOW_S = 3600  # 1 hour
 
 
+_last_cleanup = 0.0
+_CLEANUP_INTERVAL_S = 600  # 10 minutes
+
+
 def _check_rate_limit(ip: str) -> bool:
+    global _last_cleanup
     now = time.time()
+
+    # Periodic cleanup of expired entries
+    if now - _last_cleanup > _CLEANUP_INTERVAL_S:
+        expired = [k for k, v in _rate_limit_map.items() if now > v["reset_at"]]
+        for k in expired:
+            del _rate_limit_map[k]
+        _last_cleanup = now
+
     entry = _rate_limit_map.get(ip)
 
     if not entry or now > entry["reset_at"]:
@@ -84,7 +97,7 @@ async def generate(body: GenerateRequest, request: Request):
             generated_at=datetime.now(timezone.utc).isoformat(),
         )
         # Return camelCase JSON to match frontend expectations
-        return JSONResponse(_to_camel_response(response))
+        return JSONResponse(response.model_dump(by_alias=True, exclude_none=True))
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
@@ -142,34 +155,9 @@ def _handle_streaming(provider: LiveProvider, patient, body: GenerateRequest):
                 generated_at=datetime.now(timezone.utc).isoformat(),
             )
             yield {
-                "data": json.dumps({"type": "done", "response": _to_camel_response(response)})
+                "data": json.dumps({"type": "done", "response": response.model_dump(by_alias=True, exclude_none=True)})
             }
         except Exception as e:
             yield {"data": json.dumps({"type": "error", "error": str(e)})}
 
     return EventSourceResponse(event_generator())
-
-
-def _to_camel_response(response: GenerateResponse) -> dict:
-    """Convert response to camelCase dict matching frontend expectations."""
-    return {
-        "channelMessages": [
-            {
-                "channel": cm.channel,
-                "variants": [
-                    {
-                        "id": v.id,
-                        "approach": v.approach,
-                        "content": v.content,
-                        **({"subject": v.subject} if v.subject else {}),
-                        "engagementLikelihood": v.engagement_likelihood,
-                        "reasoning": v.reasoning,
-                    }
-                    for v in cm.variants
-                ],
-            }
-            for cm in response.channel_messages
-        ],
-        "provider": response.provider,
-        "generatedAt": response.generated_at,
-    }

@@ -60,6 +60,8 @@ class Patient(BaseModel):
 
 
 class MessageVariant(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     id: str
     approach: str
     content: str
@@ -69,6 +71,8 @@ class MessageVariant(BaseModel):
 
 
 class ChannelMessages(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     channel: Channel
     variants: list[MessageVariant]
 
@@ -76,31 +80,13 @@ class ChannelMessages(BaseModel):
 # --- LLM result (shape returned by LLMs) ---
 
 class LLMResult(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     channel_messages: list[ChannelMessages]
 
     @classmethod
     def from_llm_json(cls, data: dict) -> "LLMResult":
         """Parse LLM JSON which uses camelCase keys."""
-        # LLMs return camelCase (channelMessages), convert to snake_case
-        if "channelMessages" in data:
-            channel_messages = []
-            for cm in data["channelMessages"]:
-                variants = []
-                for v in cm.get("variants", []):
-                    variants.append(
-                        MessageVariant(
-                            id=v["id"],
-                            approach=v["approach"],
-                            content=v["content"],
-                            subject=v.get("subject"),
-                            engagement_likelihood=v["engagementLikelihood"],
-                            reasoning=v["reasoning"],
-                        )
-                    )
-                channel_messages.append(
-                    ChannelMessages(channel=cm["channel"], variants=variants)
-                )
-            return cls(channel_messages=channel_messages)
         return cls.model_validate(data)
 
 
@@ -125,6 +111,8 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     channel_messages: list[ChannelMessages]
     provider: LLMProvider
     generated_at: str
