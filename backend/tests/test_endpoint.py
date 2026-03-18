@@ -63,7 +63,7 @@ async def test_invalid_patient(client):
 
 
 @pytest.mark.anyio
-async def test_mock_mode_rejected(client):
+async def test_mock_mode_returns_response(client):
     r = await client.post(
         "/api/generate",
         json={
@@ -72,11 +72,50 @@ async def test_mock_mode_rejected(client):
             "tone": "warm-supportive",
             "channels": ["sms"],
             "provider": "mock",
-            "access_code": "test",
         },
     )
-    assert r.status_code == 400
-    assert "mock" in r.json()["error"].lower()
+    assert r.status_code == 200
+    data = r.json()
+    assert data["provider"] == "mock"
+    assert "channelMessages" in data
+    assert "generatedAt" in data
+    # Should only include requested channels
+    channels = [cm["channel"] for cm in data["channelMessages"]]
+    assert channels == ["sms"]
+
+
+@pytest.mark.anyio
+async def test_mock_mode_filters_channels(client):
+    r = await client.post(
+        "/api/generate",
+        json={
+            "patient_id": "maria",
+            "goal": "enrollment",
+            "tone": "warm-supportive",
+            "channels": ["email"],
+            "provider": "mock",
+        },
+    )
+    assert r.status_code == 200
+    channels = [cm["channel"] for cm in r.json()["channelMessages"]]
+    assert channels == ["email"]
+
+
+@pytest.mark.anyio
+async def test_mock_mode_fallback_for_unmatched_scenario(client):
+    """Maria has no win-back/urgent-action scenario — falls back to her first available."""
+    r = await client.post(
+        "/api/generate",
+        json={
+            "patient_id": "maria",
+            "goal": "win-back",
+            "tone": "urgent-action",
+            "channels": ["sms"],
+            "provider": "mock",
+        },
+    )
+    assert r.status_code == 200
+    assert len(r.json()["channelMessages"]) > 0
 
 
 @pytest.mark.anyio

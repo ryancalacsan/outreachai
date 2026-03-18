@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.config import settings
 from app.models import GenerateRequest, GenerateResponse, LLMResult, LiveProvider
 from app.data.patients import get_patient_by_id
+from app.data.mock_responses import get_mock_response
 from app.llm import generate_with_provider, stream_with_provider
 
 
@@ -58,12 +60,11 @@ async def generate(body: GenerateRequest, request: Request):
     if not patient:
         return JSONResponse({"error": "Patient not found"}, status_code=404)
 
-    # Mock mode not supported in Python backend
+    # Mock mode — return pre-generated responses
     if body.provider == "mock":
-        return JSONResponse(
-            {"error": "Mock mode is only available via the Next.js frontend"},
-            status_code=400,
-        )
+        await asyncio.sleep(0.8)  # Simulate delay for realism
+        response = get_mock_response(body.patient_id, body.goal, body.tone, body.channels)
+        return JSONResponse(response.model_dump(by_alias=True, exclude_none=True))
 
     # Access code check
     if not settings.demo_access_code or body.access_code != settings.demo_access_code:
