@@ -112,7 +112,7 @@ The app has two independent backend implementations — a Next.js API route (Typ
   └────────────────────────────────────────────┘
 ```
 
-### Frontend (TypeScript)
+### Next.js (Frontend + TypeScript Backend)
 
 ```
 src/
@@ -146,7 +146,7 @@ src/
     utils/format.ts        # Label maps, date formatting
 ```
 
-### Backend (Python)
+### FastAPI (Python Backend)
 
 ```
 backend/
