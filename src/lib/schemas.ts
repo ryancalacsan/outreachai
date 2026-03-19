@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// ── Domain enums ──────────────────────────────────────────────────────────────
-
 export const lifecycleStageSchema = z.enum([
   "eligible",
   "onboarding",
@@ -56,8 +54,6 @@ export const liveProviderSchema = z.enum([
 
 export const engagementLikelihoodSchema = z.enum(["high", "medium", "low"]);
 
-// ── Composite schemas ─────────────────────────────────────────────────────────
-
 export const patientSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -100,8 +96,6 @@ export const channelMessagesSchema = z.object({
   variants: z.array(messageVariantSchema),
 });
 
-// ── API schemas ───────────────────────────────────────────────────────────────
-
 export const generateRequestSchema = z.object({
   patientId: z.string().min(1).max(100),
   goal: outreachGoalSchema,
@@ -117,13 +111,9 @@ export const generateResponseSchema = z.object({
   generatedAt: z.string(),
 });
 
-// ── LLM response schema (used for validating raw LLM output) ─────────────────
-
 export const llmResultSchema = z.object({
   channelMessages: z.array(channelMessagesSchema),
 });
-
-// ── SSE event schemas ─────────────────────────────────────────────────────────
 
 export const sseChunkEventSchema = z.object({
   type: z.literal("chunk"),
@@ -146,15 +136,11 @@ export const sseEventSchema = z.discriminatedUnion("type", [
   sseErrorEventSchema,
 ]);
 
-// ── Environment variable schema ───────────────────────────────────────────────
-
 export const serverEnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   GEMINI_API_KEY: z.string().min(1).optional(),
   DEMO_ACCESS_CODE: z.string().min(1).optional(),
 });
-
-// ── Inferred types (replace manual interfaces in types.ts) ────────────────────
 
 export type LifecycleStage = z.infer<typeof lifecycleStageSchema>;
 export type CareProgram = z.infer<typeof careProgramSchema>;

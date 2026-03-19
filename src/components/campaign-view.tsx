@@ -65,7 +65,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
   return (
     <div className="animate-fade-in-up p-4 sm:p-8">
       <div className="mx-auto max-w-4xl">
-        {/* Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             Patient Outreach
@@ -76,7 +75,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
           </p>
         </div>
 
-        {/* Stats row */}
         <div className="mb-8 grid grid-cols-2 gap-3 stagger-children sm:grid-cols-4">
           <StatCard
             label="Total Patients"
@@ -108,7 +106,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
           />
         </div>
 
-        {/* Section label */}
         <div className="mb-3 flex items-center gap-2">
           <TrendingUp className="h-3.5 w-3.5 text-muted-foreground/60" />
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
@@ -116,7 +113,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
           </span>
         </div>
 
-        {/* Patient cards */}
         <div className="grid grid-cols-1 gap-4 stagger-children sm:grid-cols-2">
           {patients.map((patient) => {
             const action = lifecycleActions[patient.lifecycleStage];
@@ -126,7 +122,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
                 onClick={() => onSelectPatient(patient)}
                 className="group relative rounded-xl border border-border/80 bg-card p-5 text-left transition-all duration-200 hover:border-teal-300/60 hover:shadow-[0_2px_12px_-2px_oklch(0.565_0.115_178_/_0.12)]"
               >
-                {/* Urgent indicator */}
                 {action?.priority === "urgent" && (
                   <div className="absolute -top-px -right-px h-2.5 w-2.5 rounded-bl-lg rounded-tr-xl bg-amber-400" />
                 )}
@@ -179,7 +174,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
                   </div>
                 </div>
 
-                {/* Suggested action */}
                 <div
                   className={`mt-3 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
                     action?.priority === "urgent"
@@ -191,7 +185,6 @@ export function CampaignView({ onSelectPatient }: CampaignViewProps) {
                   {action?.label}
                 </div>
 
-                {/* Risk factors */}
                 {patient.riskFactors.length > 0 && (
                   <p className="mt-2.5 text-[11px] leading-relaxed text-muted-foreground/70">
                     {patient.riskFactors.slice(0, 2).join(" · ")}

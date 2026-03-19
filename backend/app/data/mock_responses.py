@@ -43,39 +43,33 @@ def get_mock_response(
     tone: str,
     channels: list[Channel],
 ) -> GenerateResponse:
-    """Look up a mock response with smart fallback, mirroring the TypeScript implementation."""
-    # Try exact match
+    """Look up a mock response with cascading fallback."""
     specific_key = f"{patient_id}-{goal}-{tone}"
     raw = _scenarios.get(specific_key)
 
-    # Try same patient + same goal (any tone)
     if not raw:
         for key in _scenarios:
             if key.startswith(f"{patient_id}-{goal}-"):
                 raw = _scenarios[key]
                 break
 
-    # Try same patient + same tone (any goal)
     if not raw:
         for key in _scenarios:
             if key.startswith(f"{patient_id}-") and key.endswith(f"-{tone}"):
                 raw = _scenarios[key]
                 break
 
-    # Fall back to patient's first available scenario
     if not raw:
         for key in _scenarios:
             if key.startswith(f"{patient_id}-"):
                 raw = _scenarios[key]
                 break
 
-    # Final fallback to generic default
     if not raw:
         raw = _default_response
 
     response = _parse_response(raw)
 
-    # Filter to requested channels only
     response.channel_messages = [
         cm for cm in response.channel_messages if cm.channel in channels
     ]

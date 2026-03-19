@@ -27,8 +27,7 @@ export async function generateWithClaude(
       },
     ],
     output_config: {
-      // Zod v4's toJSONSchema returns a structurally compatible JSON Schema object,
-      // but its type doesn't exactly match json-schema-to-ts's JSONSchema type.
+      // Type assertion: Zod v4 JSON Schema output is structurally compatible
       format: jsonSchemaOutputFormat(outreachResponseSchema as JSONSchema & { type: "object" }),
     },
   });

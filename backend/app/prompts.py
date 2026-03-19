@@ -7,8 +7,6 @@ from app.models import (
     Channel,
 )
 
-# --- Label mappings (mirrors src/lib/utils/format.ts) ---
-
 LIFECYCLE_STAGE_LABELS: dict[str, str] = {
     "eligible": "Eligible — Not Enrolled",
     "onboarding": "Newly Enrolled",
@@ -51,8 +49,6 @@ CHANNEL_LABELS: dict[str, str] = {
     "email": "Email",
     "in-app": "In-App",
 }
-
-# --- Channel-specific rules ---
 
 CHANNEL_RULES: dict[str, str] = {
     "sms": (

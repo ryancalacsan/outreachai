@@ -4,7 +4,6 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic.alias_generators import to_camel
 
 
-# --- Type aliases (match TypeScript string unions) ---
 
 LifecycleStage = Literal["eligible", "onboarding", "engaged", "at-risk", "lapsed"]
 CareProgram = Literal["pregnancy", "postpartum", "pediatric", "midlife"]
@@ -25,7 +24,6 @@ LLMProvider = Literal["claude", "claude-haiku", "gemini", "gemini-lite", "gemini
 LiveProvider = Literal["claude", "claude-haiku", "gemini", "gemini-lite", "gemini-preview"]
 
 
-# --- Nested models ---
 
 class CareTeam(BaseModel):
     nurse_name: str
@@ -38,7 +36,6 @@ class RecentInteraction(BaseModel):
     summary: str
 
 
-# --- Core domain models ---
 
 class Patient(BaseModel):
     id: str
@@ -77,7 +74,6 @@ class ChannelMessages(BaseModel):
     variants: list[MessageVariant]
 
 
-# --- LLM result (shape returned by LLMs) ---
 
 class LLMResult(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
@@ -90,7 +86,6 @@ class LLMResult(BaseModel):
         return cls.model_validate(data)
 
 
-# --- API request/response ---
 
 class GenerateRequest(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)

@@ -16,15 +16,13 @@ from app.llm import generate_with_provider, stream_with_provider
 
 router = APIRouter(prefix="/api")
 
-# --- Rate limiting ---
-
 _rate_limit_map: dict[str, dict] = {}
 RATE_LIMIT = 10
-RATE_WINDOW_S = 3600  # 1 hour
+RATE_WINDOW_S = 3600
 
 
 _last_cleanup = 0.0
-_CLEANUP_INTERVAL_S = 600  # 10 minutes
+_CLEANUP_INTERVAL_S = 600
 
 
 def _check_rate_limit(ip: str) -> bool:
@@ -51,26 +49,21 @@ def _check_rate_limit(ip: str) -> bool:
     return True
 
 
-# --- Endpoint ---
 
 @router.post("/generate")
 async def generate(body: GenerateRequest, request: Request):
-    # Validate patient exists
     patient = get_patient_by_id(body.patient_id)
     if not patient:
         return JSONResponse({"error": "Patient not found"}, status_code=404)
 
-    # Mock mode — return pre-generated responses
     if body.provider == "mock":
-        await asyncio.sleep(0.8)  # Simulate delay for realism
+        await asyncio.sleep(0.8)
         response = get_mock_response(body.patient_id, body.goal, body.tone, body.channels)
         return JSONResponse(response.model_dump(by_alias=True, exclude_none=True))
 
-    # Access code check
     if not settings.demo_access_code or body.access_code != settings.demo_access_code:
         return JSONResponse({"error": "Invalid access code"}, status_code=401)
 
-    # Rate limiting
     ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
     if not _check_rate_limit(ip):
         return JSONResponse(
@@ -80,11 +73,9 @@ async def generate(body: GenerateRequest, request: Request):
 
     provider: LiveProvider = body.provider  # type: ignore[assignment]
 
-    # Check if client wants streaming
     if request.headers.get("accept") == "text/event-stream":
         return _handle_streaming(provider, patient, body)
 
-    # Non-streaming
     try:
         result = await generate_with_provider(
             provider, patient, body.goal, body.tone, body.channels
@@ -97,7 +88,6 @@ async def generate(body: GenerateRequest, request: Request):
             provider=body.provider,
             generated_at=datetime.now(timezone.utc).isoformat(),
         )
-        # Return camelCase JSON to match frontend expectations
         return JSONResponse(response.model_dump(by_alias=True, exclude_none=True))
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

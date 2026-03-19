@@ -8,9 +8,7 @@ import { getServerEnv } from "@/lib/env";
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 10;
-const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const CLEANUP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
-
+const RATE_WINDOW_MS = 60 * 60 * 1000; const CLEANUP_INTERVAL_MS = 10 * 60 * 1000; 
 // Periodic cleanup of expired rate limit entries
 setInterval(() => {
   const now = Date.now();
@@ -73,15 +71,12 @@ export async function POST(request: NextRequest) {
 
   const { patientId, goal, tone, channels, provider, accessCode } = parsed.data;
 
-  // Validate patient exists
   const patient = getPatientById(patientId);
   if (!patient) {
     return NextResponse.json({ error: "Patient not found" }, { status: 404 });
   }
 
-  // Mock mode — return pre-generated responses
   if (provider === "mock") {
-    // Simulate a small delay for realism
     await new Promise((resolve) => setTimeout(resolve, 800));
     const mockResponse = getMockResponse(patientId, goal, tone, channels);
     return NextResponse.json({
@@ -90,7 +85,6 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Live mode — check access code
   const expectedCode = getServerEnv().DEMO_ACCESS_CODE;
   if (!expectedCode || accessCode !== expectedCode) {
     return NextResponse.json(
@@ -99,7 +93,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Rate limiting for live API
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   if (!checkRateLimit(ip)) {
     return NextResponse.json(
@@ -108,14 +101,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Check if client wants streaming
   const wantsStream = request.headers.get("accept") === "text/event-stream";
 
   if (wantsStream) {
     return handleStreamingRequest(provider, patient, goal, tone, channels);
   }
 
-  // Non-streaming fallback
   try {
     const result = await generateWithProvider(provider, {
       patient,
@@ -181,7 +172,6 @@ function handleStreamingRequest(
 
         for await (const chunk of gen) {
           fullText += chunk;
-          // Send chunk as SSE data event
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ type: "chunk", text: chunk })}\n\n`)
           );
@@ -204,7 +194,6 @@ function handleStreamingRequest(
           generatedAt: new Date().toISOString(),
         };
 
-        // Send the final parsed response
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ type: "done", response })}\n\n`)
         );

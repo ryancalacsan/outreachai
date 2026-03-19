@@ -40,7 +40,6 @@ export default function Home() {
       ...settings,
     };
 
-    // Use streaming for live providers, regular fetch for mock
     if (settings.provider !== "mock") {
       try {
         setIsStreaming(true);
@@ -86,7 +85,6 @@ export default function Home() {
     setError(null);
   };
 
-  // Campaign dashboard view
   if (!selectedPatient) {
     return (
       <div className="flex h-screen flex-col">
@@ -94,7 +92,6 @@ export default function Home() {
         <main className="flex-1 overflow-y-auto">
           <CampaignView onSelectPatient={(patient) => {
             setSelectedPatient(patient);
-            // Auto-open drawer on mobile
             if (typeof window !== "undefined" && window.innerWidth < 768) {
               setDrawerOpen(true);
             }
@@ -105,13 +102,10 @@ export default function Home() {
     );
   }
 
-  // Patient outreach generation view
   const mainContent = (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Patient context card */}
       <PatientCard patient={selectedPatient} />
 
-      {/* Error state */}
       {error && (
         <div className={`animate-fade-in-up flex items-start gap-3 rounded-lg border p-4 ${
           error === "Invalid access code"
@@ -140,7 +134,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Loading state */}
       {isGenerating && (
         <LoadingSkeleton
           isStreaming={isStreaming}
@@ -148,12 +141,10 @@ export default function Home() {
         />
       )}
 
-      {/* Generated messages */}
       {response && !isGenerating && (
         <MessageOutput response={response} />
       )}
 
-      {/* Empty state */}
       {!response && !isGenerating && !error && (
         <div className="flex items-center justify-center rounded-xl border border-dashed border-border/60 py-16">
           <div className="text-center">
@@ -176,7 +167,6 @@ export default function Home() {
     <div className="flex h-screen flex-col">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop sidebar — hidden on mobile */}
         <aside className="hidden w-[320px] flex-col border-r border-border/60 bg-card/50 md:flex">
           <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-4">
             <Button
@@ -209,10 +199,8 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Main content */}
         <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-4 sm:p-8">
-            {/* Mobile: back button + controls drawer */}
             <div className="mb-4 space-y-3 md:hidden">
               <Button
                 variant="ghost"
@@ -289,7 +277,6 @@ function LoadingSkeleton({
         </div>
       </div>
 
-      {/* Streaming progress bar */}
       {isStreaming && (
         <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
           <div className="h-full animate-pulse rounded-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-300"
@@ -298,7 +285,6 @@ function LoadingSkeleton({
         </div>
       )}
 
-      {/* Skeleton cards */}
       <div className="space-y-3">
         {[0, 1, 2].map((i) => (
           <div
