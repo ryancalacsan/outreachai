@@ -129,7 +129,7 @@ src/
   app/
     api/generate/
       route.ts             # POST endpoint — routes to mock or live LLM
-      route.test.ts        # API validation, mock mode, live mode, streaming (18 tests)
+      route.test.ts        # API validation, mock mode, live mode, streaming, error sanitization (23 tests)
     page.tsx               # Main layout (campaign dashboard + generation view)
     globals.css            # Theme, animations, custom properties
   components/
@@ -162,7 +162,7 @@ src/
     types.ts               # Re-exports types from schemas.ts
     env.ts                 # Validated environment variable access (via serverEnvSchema)
     api.ts                 # Client-side fetch + SSE stream parser (with Zod-validated events)
-    api.test.ts            # SSE parsing + fetch tests (10 tests)
+    api.test.ts            # SSE parsing, fetch, retry logic, error categories (16 tests)
     utils/format.ts        # Label maps, date formatting
     utils/format.test.ts   # Date/label formatting tests (14 tests)
 ```
@@ -205,6 +205,9 @@ backend/
 - **Smart fallback** — Mock mode tries exact match, then goal-match, then tone-match, then any patient scenario before falling back to generic responses
 - **Input validation** — API route validates request body with Zod `safeParse` (TypeScript) and Pydantic model binding (Python), with specific error messages for each field
 - **Environment validation** — Server env vars are validated at first use via Zod schema, failing fast with clear messages instead of cryptic runtime errors
+- **Error sanitization** — API errors are classified (transient, configuration, auth) and sanitized before reaching the client — no leaked API key names, schema paths, or raw SDK errors
+- **Automatic retry** — Transient LLM failures (rate limits, timeouts, malformed responses) are retried up to 2 times with backoff before surfacing to the user
+- **LLM JSON resilience** — Gemini calls use `responseSchema` for constrained decoding, with `jsonrepair` as a fallback for any remaining malformed output
 
 ## Running Tests
 
@@ -221,11 +224,11 @@ uv run pytest tests/ -v
 ### Next.js (TypeScript)
 
 ```bash
-npm test        # 137 tests (Vitest)
+npm test        # 146 tests (Vitest)
 npm run lint    # ESLint
 ```
 
-137 tests covering API endpoint behavior (validation, auth, rate limiting, streaming, all valid enums), Zod schema validation, LLM provider routing, prompt builders, patient data, mock response fallback logic, JSON sync between backends, component rendering, SSE stream parsing, and format utilities.
+146 tests covering API endpoint behavior (validation, auth, rate limiting, streaming, error sanitization, all valid enums), Zod schema validation, LLM provider routing, prompt builders, patient data, mock response fallback logic, JSON sync between backends, component rendering, SSE stream parsing with retry logic, and format utilities.
 
 CI runs TypeScript lint/test/build and Python tests in parallel on every push to `main` and PR via GitHub Actions.
 

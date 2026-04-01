@@ -10,10 +10,10 @@ import { OutreachControls } from "@/components/outreach-controls";
 import { MessageOutput } from "@/components/message-output";
 import { MobileControlsDrawer } from "@/components/mobile-controls-drawer";
 import { patients } from "@/lib/data/patients";
-import { generateMessages, generateMessagesStream } from "@/lib/api";
+import { generateMessages, generateMessagesStream, GenerationError, type ErrorCategory } from "@/lib/api";
 import { Patient, GenerateResponse } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowLeft, AlertCircle } from "lucide-react";
+import { Sparkles, ArrowLeft, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function Home() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -22,6 +22,8 @@ export default function Home() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamChars, setStreamChars] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [errorCategory, setErrorCategory] = useState<ErrorCategory | null>(null);
+  const [lastSettings, setLastSettings] = useState<Omit<Parameters<typeof generateMessages>[0], "patientId"> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleGenerate = async (
@@ -33,7 +35,9 @@ export default function Home() {
     setIsStreaming(false);
     setStreamChars(0);
     setError(null);
+    setErrorCategory(null);
     setResponse(null);
+    setLastSettings(settings);
 
     const request = {
       patientId: selectedPatient.id,
@@ -52,16 +56,19 @@ export default function Home() {
             setIsGenerating(false);
             setIsStreaming(false);
           },
-          onError: (errorMsg) => {
+          onError: (errorMsg, category) => {
             setError(errorMsg);
+            setErrorCategory(category || "transient");
             setIsGenerating(false);
             setIsStreaming(false);
           },
         });
       } catch (err) {
+        const isGenErr = err instanceof GenerationError;
         setError(
           err instanceof Error ? err.message : "Failed to generate messages"
         );
+        setErrorCategory(isGenErr ? err.category : "transient");
         setIsGenerating(false);
         setIsStreaming(false);
       }
@@ -70,19 +77,26 @@ export default function Home() {
         const result = await generateMessages(request);
         setResponse(result);
       } catch (err) {
+        const isGenErr = err instanceof GenerationError;
         setError(
           err instanceof Error ? err.message : "Failed to generate messages"
         );
+        setErrorCategory(isGenErr ? err.category : "transient");
       } finally {
         setIsGenerating(false);
       }
     }
   };
 
+  const handleRetry = () => {
+    if (lastSettings) handleGenerate(lastSettings);
+  };
+
   const handleBack = () => {
     setSelectedPatient(null);
     setResponse(null);
     setError(null);
+    setErrorCategory(null);
   };
 
   if (!selectedPatient) {
@@ -107,31 +121,12 @@ export default function Home() {
       <PatientCard patient={selectedPatient} />
 
       {error && (
-        <div className={`animate-fade-in-up flex items-start gap-3 rounded-lg border p-4 ${
-          error === "Invalid access code"
-            ? "border-amber-200/60 bg-amber-50/50"
-            : "border-red-200/60 bg-red-50/50"
-        }`}>
-          <AlertCircle className={`mt-0.5 h-4 w-4 shrink-0 ${
-            error === "Invalid access code" ? "text-amber-500" : "text-red-500"
-          }`} />
-          <div>
-            <p className={`text-[13px] font-medium ${
-              error === "Invalid access code" ? "text-amber-800" : "text-red-800"
-            }`}>
-              {error === "Invalid access code"
-                ? "Access code required"
-                : "Generation failed"}
-            </p>
-            <p className={`mt-0.5 text-[12px] ${
-              error === "Invalid access code" ? "text-amber-600/80" : "text-red-600/80"
-            }`}>
-              {error === "Invalid access code"
-                ? "Live AI models are available during demos. Try Demo Mode to explore with pre-generated responses."
-                : error}
-            </p>
-          </div>
-        </div>
+        <ErrorBanner
+          error={error}
+          category={errorCategory}
+          onRetry={errorCategory === "transient" ? handleRetry : undefined}
+          isGenerating={isGenerating}
+        />
       )}
 
       {isGenerating && (
@@ -186,6 +181,7 @@ export default function Home() {
                 setSelectedPatient(patient);
                 setResponse(null);
                 setError(null);
+                setErrorCategory(null);
               }}
             />
 
@@ -218,6 +214,7 @@ export default function Home() {
                   setSelectedPatient(patient);
                   setResponse(null);
                   setError(null);
+                  setErrorCategory(null);
                 }}
                 onGenerate={handleGenerate}
                 isGenerating={isGenerating}
@@ -305,6 +302,64 @@ function LoadingSkeleton({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ErrorBanner({
+  error,
+  category,
+  onRetry,
+  isGenerating,
+}: {
+  error: string;
+  category: ErrorCategory | null;
+  onRetry?: () => void;
+  isGenerating: boolean;
+}) {
+  const isAuth = category === "auth";
+  const isConfig = category === "configuration";
+
+  const borderColor = isAuth
+    ? "border-amber-200/60 bg-amber-50/50"
+    : "border-red-200/60 bg-red-50/50";
+  const iconColor = isAuth ? "text-amber-500" : "text-red-500";
+  const titleColor = isAuth ? "text-amber-800" : "text-red-800";
+  const bodyColor = isAuth ? "text-amber-600/80" : "text-red-600/80";
+
+  let title: string;
+  let body: string;
+
+  if (isAuth) {
+    title = "Access code required";
+    body = "Live AI models are available during demos. Try Demo Mode to explore with pre-generated responses.";
+  } else if (isConfig) {
+    title = "Service unavailable";
+    body = error;
+  } else {
+    title = "Generation failed";
+    body = error;
+  }
+
+  return (
+    <div className={`animate-fade-in-up flex items-start gap-3 rounded-lg border p-4 ${borderColor}`}>
+      <AlertCircle className={`mt-0.5 h-4 w-4 shrink-0 ${iconColor}`} />
+      <div className="flex-1">
+        <p className={`text-[13px] font-medium ${titleColor}`}>{title}</p>
+        <p className={`mt-0.5 text-[12px] ${bodyColor}`}>{body}</p>
+      </div>
+      {onRetry && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          disabled={isGenerating}
+          className="shrink-0 gap-1.5 text-[12px]"
+        >
+          <RefreshCw className={`h-3 w-3 ${isGenerating ? "animate-spin" : ""}`} />
+          Retry
+        </Button>
+      )}
     </div>
   );
 }

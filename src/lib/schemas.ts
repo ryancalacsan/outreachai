@@ -125,9 +125,12 @@ export const sseDoneEventSchema = z.object({
   response: generateResponseSchema,
 });
 
+export const errorCategorySchema = z.enum(["transient", "configuration", "auth"]);
+
 export const sseErrorEventSchema = z.object({
   type: z.literal("error"),
   error: z.string(),
+  category: errorCategorySchema.optional(),
 });
 
 export const sseEventSchema = z.discriminatedUnion("type", [

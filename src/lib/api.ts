@@ -1,6 +1,30 @@
 import { type GenerateRequest, type GenerateResponse, sseEventSchema } from "@/lib/schemas";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1500;
+
+export type ErrorCategory = "transient" | "configuration" | "auth";
+
+export class GenerationError extends Error {
+  category: ErrorCategory;
+  constructor(message: string, category: ErrorCategory = "transient") {
+    super(message);
+    this.name = "GenerationError";
+    this.category = category;
+  }
+}
+
+function toGenerationError(res: Response, body: { error?: string; category?: ErrorCategory }): GenerationError {
+  const message = body.error || `Request failed: ${res.status}`;
+  if (res.status === 401) return new GenerationError(message, "auth");
+  if (res.status === 429) return new GenerationError(message, "transient");
+  return new GenerationError(message, body.category || "transient");
+}
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function generateMessages(
   request: GenerateRequest
@@ -12,8 +36,8 @@ export async function generateMessages(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(error.error || `Request failed: ${res.status}`);
+    const body = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw toGenerationError(res, body);
   }
 
   return res.json();
@@ -22,13 +46,47 @@ export async function generateMessages(
 export interface StreamCallbacks {
   onChunk?: (text: string, accumulated: string) => void;
   onDone: (response: GenerateResponse) => void;
-  onError: (error: string) => void;
+  onError: (error: string, category?: ErrorCategory) => void;
 }
 
 export async function generateMessagesStream(
   request: GenerateRequest,
   callbacks: StreamCallbacks
 ): Promise<void> {
+  let lastError: { message: string; category?: ErrorCategory } | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await sleep(RETRY_DELAY_MS * attempt);
+    }
+
+    try {
+      const result = await attemptStream(request, callbacks);
+      if (result === "done") return;
+
+      // result is an error — check if retryable
+      lastError = result;
+      if (result.category !== "transient") break;
+    } catch (err) {
+      // Network-level failures are transient
+      lastError = {
+        message: err instanceof Error ? err.message : "Network error",
+        category: "transient",
+      };
+      if (attempt === MAX_RETRIES) break;
+    }
+  }
+
+  callbacks.onError(
+    lastError?.message || "Failed to generate messages",
+    lastError?.category
+  );
+}
+
+async function attemptStream(
+  request: GenerateRequest,
+  callbacks: StreamCallbacks
+): Promise<"done" | { message: string; category?: ErrorCategory }> {
   const res = await fetch(`${API_BASE}/api/generate`, {
     method: "POST",
     headers: {
@@ -39,13 +97,14 @@ export async function generateMessagesStream(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(error.error || `Request failed: ${res.status}`);
+    const body = await res.json().catch(() => ({ error: "Unknown error" }));
+    const err = toGenerationError(res, body);
+    return { message: err.message, category: err.category };
   }
 
   const reader = res.body?.getReader();
   if (!reader) {
-    throw new Error("No response body");
+    return { message: "No response body", category: "transient" };
   }
 
   const decoder = new TextDecoder();
@@ -75,8 +134,7 @@ export async function generateMessagesStream(
       const raw = JSON.parse(dataLines.join("\n"));
       const parsed = sseEventSchema.safeParse(raw);
       if (!parsed.success) {
-        callbacks.onError(`Malformed SSE event: ${parsed.error.issues[0].message}`);
-        return;
+        return { message: "Received an invalid response from the server", category: "transient" };
       }
       const data = parsed.data;
 
@@ -85,14 +143,12 @@ export async function generateMessagesStream(
         callbacks.onChunk?.(data.text, accumulated);
       } else if (data.type === "done") {
         callbacks.onDone(data.response);
-        return;
+        return "done";
       } else if (data.type === "error") {
-        callbacks.onError(data.error);
-        return;
+        return { message: data.error, category: data.category || "transient" };
       }
     }
   }
 
-  // Stream closed without a done/error event
-  callbacks.onError("Stream ended unexpectedly");
+  return { message: "Stream ended unexpectedly", category: "transient" };
 }

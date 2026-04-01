@@ -129,10 +129,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
   } catch (err) {
     console.error(`[${provider}] Generation error:`, err);
-    const message =
-      err instanceof Error ? err.message : "Failed to generate messages";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const { message, category } = classifyError(err);
+    return NextResponse.json({ error: message, category }, { status: 500 });
   }
+}
+
+type ErrorCategory = "transient" | "configuration";
+
+function classifyError(err: unknown): { message: string; category: ErrorCategory } {
+  const raw = err instanceof Error ? err.message : String(err);
+
+  // Configuration errors — missing/invalid API keys, env issues
+  if (/API_KEY|not configured|environment variable|api.?key.*not valid|invalid.*api.?key|authentication failed|unauthorized/i.test(raw)) {
+    return { message: "AI service is not configured. Please contact the administrator.", category: "configuration" };
+  }
+
+  // Transient errors — rate limits, timeouts, network, overloaded
+  if (/rate.?limit|quota|429|timeout|timed?.?out|ECONNREFUSED|ENOTFOUND|fetch failed|overloaded|503|529|capacity/i.test(raw)) {
+    return { message: "The AI service is temporarily unavailable. Please try again.", category: "transient" };
+  }
+
+  // Validation errors — malformed LLM response
+  if (/Invalid LLM response|No valid JSON|No text response|No structured output/i.test(raw)) {
+    return { message: "The AI model returned an unexpected response. Please try again.", category: "transient" };
+  }
+
+  // Default — don't expose raw error
+  return { message: "Something went wrong generating messages. Please try again.", category: "transient" };
 }
 
 function extractFirstJson(text: string): string | null {
@@ -207,10 +230,10 @@ function handleStreamingRequest(
           encoder.encode(`data: ${JSON.stringify({ type: "done", response })}\n\n`)
         );
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to generate messages";
+        console.error(`[${provider}] Streaming error:`, err);
+        const { message, category } = classifyError(err);
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: "error", error: message })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ type: "error", error: message, category })}\n\n`)
         );
       } finally {
         controller.close();

@@ -225,6 +225,102 @@ describe("POST /api/generate", () => {
     });
   });
 
+  describe("error sanitization", () => {
+    it("returns sanitized configuration error for missing API key", async () => {
+      const { generateWithProvider } = await import("@/lib/llm");
+      vi.mocked(generateWithProvider).mockRejectedValue(
+        new Error("ANTHROPIC_API_KEY is not configured")
+      );
+
+      const res = await POST(
+        makeRequest({
+          ...validBody,
+          provider: "claude",
+          accessCode: "test-code",
+        })
+      );
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error).toBe("AI service is not configured. Please contact the administrator.");
+      expect(data.category).toBe("configuration");
+      expect(data.error).not.toContain("ANTHROPIC_API_KEY");
+    });
+
+    it("returns sanitized configuration error for invalid API key", async () => {
+      const { generateWithProvider } = await import("@/lib/llm");
+      vi.mocked(generateWithProvider).mockRejectedValue(
+        new Error("API key not valid. Please pass a valid API key.")
+      );
+
+      const res = await POST(
+        makeRequest({
+          ...validBody,
+          provider: "gemini",
+          accessCode: "test-code",
+        })
+      );
+      const data = await res.json();
+      expect(data.category).toBe("configuration");
+      expect(data.error).not.toContain("API key not valid");
+    });
+
+    it("returns sanitized transient error for rate limit from provider", async () => {
+      const { generateWithProvider } = await import("@/lib/llm");
+      vi.mocked(generateWithProvider).mockRejectedValue(
+        new Error("429 rate limit exceeded for model")
+      );
+
+      const res = await POST(
+        makeRequest({
+          ...validBody,
+          provider: "gemini",
+          accessCode: "test-code",
+        })
+      );
+      const data = await res.json();
+      expect(data.category).toBe("transient");
+      expect(data.error).toContain("temporarily unavailable");
+    });
+
+    it("returns sanitized transient error for invalid LLM response", async () => {
+      const { generateWithProvider } = await import("@/lib/llm");
+      vi.mocked(generateWithProvider).mockRejectedValue(
+        new Error("Invalid LLM response: channelMessages[0].variants[0].engagementLikelihood: Invalid enum value")
+      );
+
+      const res = await POST(
+        makeRequest({
+          ...validBody,
+          provider: "gemini",
+          accessCode: "test-code",
+        })
+      );
+      const data = await res.json();
+      expect(data.category).toBe("transient");
+      expect(data.error).not.toContain("channelMessages");
+      expect(data.error).toContain("unexpected response");
+    });
+
+    it("returns sanitized transient error for unknown errors", async () => {
+      const { generateWithProvider } = await import("@/lib/llm");
+      vi.mocked(generateWithProvider).mockRejectedValue(
+        new Error("some unexpected internal error with stack trace")
+      );
+
+      const res = await POST(
+        makeRequest({
+          ...validBody,
+          provider: "gemini",
+          accessCode: "test-code",
+        })
+      );
+      const data = await res.json();
+      expect(data.category).toBe("transient");
+      expect(data.error).not.toContain("stack trace");
+      expect(data.error).toContain("Something went wrong");
+    });
+  });
+
   describe("streaming", () => {
     it("returns SSE response when Accept is text/event-stream", async () => {
       const { streamWithProvider } = await import("@/lib/llm");
