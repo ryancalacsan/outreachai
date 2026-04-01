@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import { LLMGenerateParams, LLMGenerateResult, validateLLMResult } from "./index";
+import { jsonrepair } from "jsonrepair";
+import { LLMGenerateParams, LLMGenerateResult, validateLLMResult, outreachResponseSchema } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 import { requireEnv } from "@/lib/env";
 
@@ -20,6 +21,9 @@ export async function generateWithGemini(
     config: {
       systemInstruction: buildSystemPrompt(params.channels),
       responseMimeType: "application/json",
+      responseSchema: outreachResponseSchema as Parameters<
+        typeof ai.models.generateContent
+      >[0]["config"] extends { responseSchema?: infer S } ? S : never,
     },
   });
 
@@ -27,6 +31,11 @@ export async function generateWithGemini(
     throw new Error("No text response from Gemini");
   }
 
-  const parsed = JSON.parse(response.text);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(response.text);
+  } catch {
+    parsed = JSON.parse(jsonrepair(response.text));
+  }
   return validateLLMResult(parsed);
 }

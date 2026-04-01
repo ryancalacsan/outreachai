@@ -69,7 +69,9 @@ export function MessageOutput({ response }: MessageOutputProps) {
                 ? "Gemini 2.5 Flash Lite"
                 : response.provider === "gemini-preview"
                   ? "Gemini 3.1 Flash Lite"
-                  : "Claude Sonnet"}
+                  : response.provider === "claude-haiku"
+                    ? "Claude Haiku"
+                    : "Claude Sonnet"}
         </div>
       </div>
 

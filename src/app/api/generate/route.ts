@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jsonrepair } from "jsonrepair";
 import { generateRequestSchema, type GenerateResponse } from "@/lib/schemas";
 import { getPatientById } from "@/lib/data/patients";
 import { getMockResponse } from "@/lib/data/mock-responses";
@@ -149,6 +150,14 @@ function extractFirstJson(text: string): string | null {
   return null;
 }
 
+function safeJsonParse(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return JSON.parse(jsonrepair(text));
+  }
+}
+
 function handleStreamingRequest(
   provider: LiveProvider,
   patient: Parameters<typeof generateWithProvider>[1]["patient"],
@@ -183,7 +192,7 @@ function handleStreamingRequest(
           throw new Error("No valid JSON found in streamed response");
         }
         // Parse the complete JSON and apply channel filtering
-        const parsed = validateLLMResult(JSON.parse(extractedJson));
+        const parsed = validateLLMResult(safeJsonParse(extractedJson));
         const filteredMessages = parsed.channelMessages.filter(
           (cm: { channel: string }) => channels.includes(cm.channel as typeof channels[number])
         );

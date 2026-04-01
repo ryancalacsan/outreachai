@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { LLMGenerateParams } from "./index";
+import { LLMGenerateParams, outreachResponseSchema } from "./index";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function* streamWithGemini(
@@ -24,6 +24,9 @@ export async function* streamWithGemini(
     config: {
       systemInstruction: buildSystemPrompt(params.channels),
       responseMimeType: "application/json",
+      responseSchema: outreachResponseSchema as Parameters<
+        typeof ai.models.generateContentStream
+      >[0]["config"] extends { responseSchema?: infer S } ? S : never,
     },
   });
 
