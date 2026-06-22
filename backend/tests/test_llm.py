@@ -99,7 +99,7 @@ class TestGenerateWithProvider:
         mock_gemini.return_value = _MOCK_RESULT
         await generate_with_provider("gemini-preview", **_PARAMS)
         mock_gemini.assert_called_once()
-        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.1-flash-lite-preview"
+        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.1-flash-lite"
 
 
 # --- stream_with_provider routing ---
@@ -155,7 +155,7 @@ class TestStreamWithProvider:
 
         mock_gemini.return_value = fake_stream()
         [c async for c in stream_with_provider("gemini-preview", **_PARAMS)]
-        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.1-flash-lite-preview"
+        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.1-flash-lite"
 
 
 # --- LLMResult validation (invalid inputs) ---

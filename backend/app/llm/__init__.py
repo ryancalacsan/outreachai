@@ -20,7 +20,7 @@ CLAUDE_MODELS: dict[str, str] = {
 GEMINI_MODELS: dict[str, str] = {
     "gemini": "gemini-2.5-flash",
     "gemini-lite": "gemini-2.5-flash-lite",
-    "gemini-preview": "gemini-3.1-flash-lite-preview",
+    "gemini-preview": "gemini-3.1-flash-lite",
 }
 
 

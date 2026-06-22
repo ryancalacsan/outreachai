@@ -64,7 +64,7 @@ function claudeModelId(provider: string): string {
 function geminiModelId(provider: string): string {
   switch (provider) {
     case "gemini-lite": return "gemini-2.5-flash-lite";
-    case "gemini-preview": return "gemini-3.1-flash-lite-preview";
+    case "gemini-preview": return "gemini-3.1-flash-lite";
     default: return "gemini-2.5-flash";
   }
 }

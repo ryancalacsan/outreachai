@@ -102,7 +102,7 @@ const providers: {
   {
     value: "gemini-preview",
     label: "Gemini 3.1 Flash Lite",
-    description: "Google — Latest preview",
+    description: "Google — Newest & fastest",
   },
   {
     value: "claude-haiku",

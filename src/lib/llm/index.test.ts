@@ -116,7 +116,7 @@ describe("generateWithProvider", () => {
     await generateWithProvider("gemini-preview", mockParams);
     expect(generateWithGemini).toHaveBeenCalledWith(
       mockParams,
-      "gemini-3.1-flash-lite-preview"
+      "gemini-3.1-flash-lite"
     );
   });
 
@@ -159,7 +159,7 @@ describe("streamWithProvider", () => {
     streamWithProvider("gemini-preview", mockParams);
     expect(streamWithGemini).toHaveBeenCalledWith(
       mockParams,
-      "gemini-3.1-flash-lite-preview"
+      "gemini-3.1-flash-lite"
     );
   });
 
