@@ -101,14 +101,14 @@ describe("generateWithProvider", () => {
 
   it("routes gemini to generateWithGemini with correct model", async () => {
     await generateWithProvider("gemini", mockParams);
-    expect(generateWithGemini).toHaveBeenCalledWith(mockParams, "gemini-2.5-flash");
+    expect(generateWithGemini).toHaveBeenCalledWith(mockParams, "gemini-3.5-flash");
   });
 
   it("routes gemini-lite to generateWithGemini with lite model", async () => {
     await generateWithProvider("gemini-lite", mockParams);
     expect(generateWithGemini).toHaveBeenCalledWith(
       mockParams,
-      "gemini-2.5-flash-lite"
+      "gemini-3.5-flash-lite"
     );
   });
 
@@ -144,14 +144,14 @@ describe("streamWithProvider", () => {
 
   it("routes gemini to streamWithGemini with correct model", () => {
     streamWithProvider("gemini", mockParams);
-    expect(streamWithGemini).toHaveBeenCalledWith(mockParams, "gemini-2.5-flash");
+    expect(streamWithGemini).toHaveBeenCalledWith(mockParams, "gemini-3.5-flash");
   });
 
   it("routes gemini-lite to streamWithGemini with lite model", () => {
     streamWithProvider("gemini-lite", mockParams);
     expect(streamWithGemini).toHaveBeenCalledWith(
       mockParams,
-      "gemini-2.5-flash-lite"
+      "gemini-3.5-flash-lite"
     );
   });
 

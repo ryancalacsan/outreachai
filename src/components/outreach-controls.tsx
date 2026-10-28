@@ -91,12 +91,12 @@ const providers: {
   },
   {
     value: "gemini-lite",
-    label: "Gemini 2.5 Flash Lite",
+    label: "Gemini 3.5 Flash Lite",
     description: "Google — Fast & lightweight",
   },
   {
     value: "gemini",
-    label: "Gemini 2.5 Flash",
+    label: "Gemini 3.5 Flash",
     description: "Google — Balanced",
   },
   {
