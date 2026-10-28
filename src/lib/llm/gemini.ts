@@ -6,7 +6,7 @@ import { requireEnv } from "@/lib/env";
 
 export async function generateWithGemini(
   params: LLMGenerateParams,
-  model: string = "gemini-2.5-flash"
+  model: string = "gemini-3.5-flash"
 ): Promise<LLMGenerateResult> {
   const ai = new GoogleGenAI({ apiKey: requireEnv("GEMINI_API_KEY") });
 

@@ -4,7 +4,6 @@ import {
   type OutreachGoal,
   type MessageTone,
   type Channel,
-  type ChannelMessages,
   type LLMGenerateResult,
   type LiveProvider,
   llmResultSchema,
@@ -63,9 +62,9 @@ function claudeModelId(provider: string): string {
 
 function geminiModelId(provider: string): string {
   switch (provider) {
-    case "gemini-lite": return "gemini-2.5-flash-lite";
+    case "gemini-lite": return "gemini-3.5-flash-lite";
     case "gemini-preview": return "gemini-3.1-flash-lite";
-    default: return "gemini-2.5-flash";
+    default: return "gemini-3.5-flash";
   }
 }
 

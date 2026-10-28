@@ -83,7 +83,7 @@ class TestGenerateWithProvider:
         mock_gemini.return_value = _MOCK_RESULT
         await generate_with_provider("gemini", **_PARAMS)
         mock_gemini.assert_called_once()
-        assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash"
+        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.5-flash"
 
     @pytest.mark.anyio
     @patch("app.llm.generate_with_gemini", new_callable=AsyncMock)
@@ -91,7 +91,7 @@ class TestGenerateWithProvider:
         mock_gemini.return_value = _MOCK_RESULT
         await generate_with_provider("gemini-lite", **_PARAMS)
         mock_gemini.assert_called_once()
-        assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
+        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.5-flash-lite"
 
     @pytest.mark.anyio
     @patch("app.llm.generate_with_gemini", new_callable=AsyncMock)
@@ -135,7 +135,7 @@ class TestStreamWithProvider:
 
         mock_gemini.return_value = fake_stream()
         [c async for c in stream_with_provider("gemini", **_PARAMS)]
-        assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash"
+        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.5-flash"
 
     @pytest.mark.anyio
     @patch("app.llm.stream_with_gemini")
@@ -145,7 +145,7 @@ class TestStreamWithProvider:
 
         mock_gemini.return_value = fake_stream()
         [c async for c in stream_with_provider("gemini-lite", **_PARAMS)]
-        assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
+        assert mock_gemini.call_args.kwargs["model"] == "gemini-3.5-flash-lite"
 
     @pytest.mark.anyio
     @patch("app.llm.stream_with_gemini")
@@ -246,7 +246,7 @@ class TestUnknownProvider:
             await generate_with_provider("gemini-unknown", **_PARAMS)
             mock_gemini.assert_called_once()
             # Falls back to default gemini model
-            assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash"
+            assert mock_gemini.call_args.kwargs["model"] == "gemini-3.5-flash"
 
     @pytest.mark.anyio
     async def test_stream_unknown_provider_uses_gemini_fallback(self):
@@ -259,4 +259,4 @@ class TestUnknownProvider:
             mock_gemini.return_value = fake_stream()
             chunks = [c async for c in stream_with_provider("gemini-unknown", **_PARAMS)]
             assert chunks == ["chunk"]
-            assert mock_gemini.call_args.kwargs["model"] == "gemini-2.5-flash"
+            assert mock_gemini.call_args.kwargs["model"] == "gemini-3.5-flash"

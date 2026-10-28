@@ -4,7 +4,7 @@ import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompts/outreach";
 
 export async function* streamWithGemini(
   params: LLMGenerateParams,
-  model: string = "gemini-2.5-flash"
+  model: string = "gemini-3.5-flash"
 ): AsyncGenerator<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {

@@ -27,7 +27,7 @@ async def generate_with_gemini(
     goal: OutreachGoal,
     tone: MessageTone,
     channels: list[Channel],
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3.5-flash",
 ) -> LLMResult:
     """Generate outreach messages using Gemini (non-streaming)."""
     client = _get_client()
@@ -51,7 +51,7 @@ async def stream_with_gemini(
     goal: OutreachGoal,
     tone: MessageTone,
     channels: list[Channel],
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3.5-flash",
 ) -> AsyncGenerator[str, None]:
     """Stream outreach message generation from Gemini."""
     client = _get_client()

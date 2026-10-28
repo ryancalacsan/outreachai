@@ -18,8 +18,8 @@ CLAUDE_MODELS: dict[str, str] = {
 }
 
 GEMINI_MODELS: dict[str, str] = {
-    "gemini": "gemini-2.5-flash",
-    "gemini-lite": "gemini-2.5-flash-lite",
+    "gemini": "gemini-3.5-flash",
+    "gemini-lite": "gemini-3.5-flash-lite",
     "gemini-preview": "gemini-3.1-flash-lite",
 }
 
@@ -36,7 +36,7 @@ async def generate_with_provider(
         model = CLAUDE_MODELS[provider]
         return await generate_with_claude(patient, goal, tone, channels, model=model)
 
-    model = GEMINI_MODELS.get(provider, "gemini-2.5-flash")
+    model = GEMINI_MODELS.get(provider, "gemini-3.5-flash")
     return await generate_with_gemini(patient, goal, tone, channels, model=model)
 
 
@@ -54,6 +54,6 @@ async def stream_with_provider(
             yield chunk
         return
 
-    model = GEMINI_MODELS.get(provider, "gemini-2.5-flash")
+    model = GEMINI_MODELS.get(provider, "gemini-3.5-flash")
     async for chunk in stream_with_gemini(patient, goal, tone, channels, model=model):
         yield chunk
